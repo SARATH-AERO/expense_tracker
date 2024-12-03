@@ -125,10 +125,5 @@ const Accounts = () => {
   );
 };
 
-const AccountsWrapper = () => (
-  <AppProvider>
-    <Accounts />
-  </AppProvider>
-);
 
-export default AccountsWrapper;
+export default Accounts;

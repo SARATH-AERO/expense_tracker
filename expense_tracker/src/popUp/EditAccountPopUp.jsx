@@ -142,7 +142,7 @@ const EditAccountPopUP = ({ show, onClose, account }) => {
                         </div>
                         <div className="form-group">
                             <label htmlFor="money">Money:</label>
-                            <input type="number" className="form-control" id="money" placeholder="Amount" value={money} onChange={(e) => setMoney(e.target.value)} required />
+                            <input type="number" className="form-control" id="money" placeholder="Amount" value={money} onChange={(e) => setMoney(e.target.value)} disabled />
                         </div>
                         <div className="d-flex justify-content-center mt-4">
                          { showSuccess != 'delete' &&   <button type="submit" className="btn btn-primary me-4">Update Account</button>  }

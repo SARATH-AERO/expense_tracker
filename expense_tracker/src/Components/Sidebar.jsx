@@ -38,14 +38,14 @@ const Sidebar = () => {
             style={{
               ...styles.menuItem,
               backgroundColor:
-                selectedSection === item.name ? "#333" : "transparent", // Highlight selected item
-              color: selectedSection === item.name ? "#2F3E8A" : "white", // Change text color
+                selectedSection === item.name ? "#2F3E8A" : "transparent", // Highlight selected item
+              color: selectedSection === item.name ? "white" : "white", // Change text color
             }}
           >
             <span
               style={{
                 ...styles.icon,
-                color: selectedSection === item.name ? "#2F3E8A" : "white", // Change icon color
+                color: selectedSection === item.name ? "white" : "white", // Change icon color
               }}
             >
               {item.icon}
