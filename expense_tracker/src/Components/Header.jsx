@@ -8,11 +8,9 @@ const Header = () => {
 
   return (
     <header style={styles.header}>
-      <div style={styles.logo}>
-      <BiDollarCircle style={styles.dollarIcon} />
-      </div>
-      <div>
-      <h1 style={styles.title}>{currentView}</h1>
+      <div style={{ ...styles.logo, display: 'flex', alignItems: 'center' }}>
+        <BiDollarCircle style={{ ...styles.dollarIcon, verticalAlign: 'middle' }} />
+        <h1 style={{ ...styles.title, margin: 0, lineHeight: '1.2', marginLeft:'8px' }}>{currentView}</h1>
       </div>
     </header>
   );
