@@ -27,10 +27,7 @@ const NewTransactionExpense = () => {
     }
   }, [accounts]);
 
-  useEffect ( () => {
-    console.log(accounts);
-    console.log(transactions);
-  }, [accounts, transactions]);
+  
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -90,13 +87,14 @@ const NewTransactionExpense = () => {
         </select>
       </Form.Group>
       <Form.Group controlId="formAmount">
-        <Form.Label>Money</Form.Label>
+        <Form.Label>Amount</Form.Label>
         <Form.Control
           type="number"
           name="amount"
           value={formData.amount}
           onChange={handleInputChange}
           isInvalid={!!error}
+          required
         />
         <Form.Control.Feedback type="invalid">
           {error}
@@ -125,14 +123,14 @@ const NewTransactionExpense = () => {
         </select>
       </Form.Group>
       <Form.Group controlId="formDate">
-        <Form.Label>Date</Form.Label>
-        <DatePicker selected={formData.date} onChange={handleDateChange} />
+        <Form.Label style={{marginTop:'20px', marginRight:'10px'}}>Date</Form.Label>
+        <DatePicker selected={formData.date} onChange={handleDateChange}  />
       </Form.Group>
       <Form.Group controlId="formNote">
         <Form.Label>Note</Form.Label>
-        <Form.Control type="text" name="note" value={formData.note} onChange={handleInputChange} />
+        <Form.Control type="text" name="note" value={formData.note} onChange={handleInputChange} style={{marginBottom:'10px'}} />
       </Form.Group>
-      <Button variant="primary" type="submit">
+      <Button variant="primary" type="submit" style={{marginTop:'2opx'}}>
         Add Expense
       </Button>
     </Form>

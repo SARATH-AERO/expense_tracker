@@ -4,6 +4,9 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 import NewTransactionExpense from './NewTransactionExpense';
+import NewTransactionTransfer from './NewTransactionTransfer';
+import NewTransactionIncome from './NewTransactionIncome';
+import NewTransactionLoanPayment from './NewTransactionLoanPayment';
 
 const NewTransactionModal = ({ show, onClose }) => {
   const { accounts, addTransaction } = useContext(AppContext);
@@ -63,8 +66,8 @@ const NewTransactionModal = ({ show, onClose }) => {
             handleSubmit={handleSubmit}
           />
         )}
-        {/* {activeTab === 'transfer' && (
-          <Transfer
+        {activeTab === 'transfer' && (
+          <NewTransactionTransfer
             formData={formData}
             handleInputChange={handleInputChange}
             handleDateChange={handleDateChange}
@@ -72,7 +75,7 @@ const NewTransactionModal = ({ show, onClose }) => {
           />
         )}
         {activeTab === 'income' && (
-          <Income
+          <NewTransactionIncome
             formData={formData}
             handleInputChange={handleInputChange}
             handleDateChange={handleDateChange}
@@ -80,13 +83,13 @@ const NewTransactionModal = ({ show, onClose }) => {
           />
         )}
         {activeTab === 'loanPayment' && (
-          <LoanPayment
+          <NewTransactionLoanPayment
             formData={formData}
             handleInputChange={handleInputChange}
             handleDateChange={handleDateChange}
             handleSubmit={handleSubmit}
           />
-        )} */}
+        )}
       </Modal.Body>
     </Modal>
   );
