@@ -7,7 +7,7 @@ import { AppContext } from '../context/AppContext';
 const AddAccountPopUP = ({ show, onClose }) => {
   const { accounts, addAccount } = useContext(AppContext);
   const [name, setName] = useState('');
-  const [money, setMoney] = useState('');
+  const [amount, setamount] = useState('');
   const [group, setGroup] = useState('Cash');
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ const AddAccountPopUP = ({ show, onClose }) => {
       return;
     }
 
-    addAccount({ name, money, group });
+    addAccount({ name, amount, group });
     setShowSuccess(true);
     setError('');
   };
@@ -151,14 +151,14 @@ const AddAccountPopUP = ({ show, onClose }) => {
               </select>
             </div>
             <div className="form-group">
-              <label htmlFor="money">Money:</label>
+              <label htmlFor="amount">amount:</label>
               <input
                 type="number"
                 className="form-control"
-                id="money"
+                id="amount"
                 placeholder="Amount"
-                value={money}
-                onChange={(e) => setMoney(e.target.value)}
+                value={amount}
+                onChange={(e) => setamount(e.target.value)}
                 required
               />
             </div>

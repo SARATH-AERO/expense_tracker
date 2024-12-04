@@ -48,15 +48,21 @@ export const AppProvider = ({ children }) => {
   // initial values
   useEffect (() => {
   setAccounts([...accounts, 
-    { name:'Sarath Wallet', money:5000, group:'Cash'},
-    { name:'Rashmika Wallet', money:5000, group:'Cash'},
-    { name:'Chirji SBI savings ', money:5000, group:'Bank Account'},
-    { name:'Sarath HDFC savings ', money:5000, group:'Bank Account'},
-    { name:'HDFC Master Credit', money:5000, group:'Credit'},
-    { name:'SBI Reliance Credit', money:5000, group:'Credit'},
-    { name:'Bike Loan', money:150000, group:'Loan'},
-    { name:'Car Loan', money:550400, group:'Loan'}
+    { name:'Sarath Wallet', amount:5000, group:'Cash'},
+    { name:'Rashmika Wallet', amount:5000, group:'Cash'},
+    { name:'Chirji SBI savings', amount:5000, group:'Bank Account'},
+    { name:'Sarath HDFC savings', amount:5000, group:'Bank Account'},
+    { name:'HDFC Master Credit', amount:5000, group:'Credit'},
+    { name:'SBI Reliance Credit', amount:5000, group:'Credit'},
+    { name:'Bike Loan', amount:150000, group:'Loan'},
+    { name:'Car Loan', amount:550400, group:'Loan'}
   ])  
+
+  setTransactions([ ...transactions,
+    {from : 'Sarath Wallet', amount:500, tag :'Rashmika Wallet', date:new Date(), note: 'self transfer', transType : 'Self-Transfer'},
+    {from : 'Sarath Wallet', amount:500, tag :'Chirji SBI savings', date:new Date(), note: 'self transfer GPay', transType : 'Self-Transfer'},
+    {from : 'Sarath HDFC savings', amount:500, tag :'Rashmika Wallet', date:new Date(), note: 'self transfer GPay', transType : 'Self-Transfer'}
+  ])
 },[]);
 
   return (

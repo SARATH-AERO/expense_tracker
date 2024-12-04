@@ -4,10 +4,26 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 
-const NewTransactionTransfer = ({ formData, handleInputChange, handleDateChange, handleSubmit }) => {
+const NewTransactionTransfer = ({  handleSubmit }) => {
   const { accounts, setAccounts, transactions, addTransaction } = useContext(AppContext);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [formData, setFormData] = useState({
+    from: '',
+    amount: '',
+    tag: '',
+    date: new Date(),
+    note: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleDateChange = (date) => {
+    setFormData({ ...formData, date });
+  };
 
   useEffect(() => {
     if (accounts.length > 0) {
@@ -20,10 +36,10 @@ const NewTransactionTransfer = ({ formData, handleInputChange, handleDateChange,
     }
   }, [accounts, formData.from, formData.to, handleInputChange]);
 
-//   useEffect ( () => {
-//     console.log(accounts);
-//     console.log(transactions);
-//   }, [accounts, transactions]);
+  useEffect(() => {
+    console.log(accounts);
+    console.log(transactions);
+  }, [accounts, transactions]);
 
   const validateAndSubmit = (e) => {
     e.preventDefault();
@@ -38,31 +54,31 @@ const NewTransactionTransfer = ({ formData, handleInputChange, handleDateChange,
       return;
     }
 
-    if (amount > fromAccount.money) {
+    if (amount > fromAccount.amount) {
       setError('Not enough money');
       return;
     } else {
-      fromAccount.money -= amount;
+      fromAccount.amount -= amount;
       if (formData.to !== 'Others' && toAccount) {
-        toAccount.money += amount;
+        toAccount.amount += amount;
       }
     }
 
     setAccounts([...accounts]);
     addTransaction({
-        from: formData.from,
-        amount: formData.amount,
-        tag: formData.to,
-        date: formData.date,
-        note: formData.note
-      });
-    // handleSubmit();
+      from: formData.from,
+      amount: formData.amount,
+      tag: formData.to,
+      date: formData.date,
+      note: formData.note,
+      transType : 'Sef-Transfer'
+    });
     setError('');
-    setSuccess('Money transfer successful');
+    setSuccess('Amount transfer successful');
   };
 
   const fromAccounts = accounts.filter(account => account.group === 'Cash' || account.group === 'Bank Account');
-  const toAccounts = accounts.filter(account => account.group === 'Cash' || account.group === 'Bank Account') ;
+  const toAccounts = accounts.filter(account => account.group === 'Cash' || account.group === 'Bank Account');
 
   return (
     <Form onSubmit={validateAndSubmit}>
@@ -117,7 +133,7 @@ const NewTransactionTransfer = ({ formData, handleInputChange, handleDateChange,
         />
       </Form.Group>
       <Form.Group controlId="formDate">
-        <Form.Label style={{marginTop:'20px', marginRight:'10px'}}>Date</Form.Label>
+        <Form.Label style={{ marginTop: '20px', marginRight: '10px' }}>Date</Form.Label>
         <DatePicker selected={formData.date} onChange={handleDateChange} />
       </Form.Group>
       <div className="d-flex justify-content-center mt-3">

@@ -6,21 +6,21 @@ import { AppContext } from '../context/AppContext';
 const EditAccountPopUP = ({ show, onClose, account }) => {
     const { editAccount, deleteAccount } = useContext(AppContext);
     const [name, setName] = useState('');
-    const [money, setMoney] = useState('');
+    const [amount, setamount] = useState('');
     const [group, setGroup] = useState('Cash');
     const [showSuccess, setShowSuccess] = useState('');
 
     useEffect(() => {
         if (account) {
             setName(account.name);
-            setMoney(account.money);
+            setamount(account.amount);
             setGroup(account.group);
         }
     }, [account]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        editAccount({ ...account, name, money, group });
+        editAccount({ ...account, name, amount, group });
         setShowSuccess('update');
     };
 
@@ -141,8 +141,8 @@ const EditAccountPopUP = ({ show, onClose, account }) => {
                             </select>
                         </div>
                         <div className="form-group">
-                            <label htmlFor="money">Money:</label>
-                            <input type="number" className="form-control" id="money" placeholder="Amount" value={money} onChange={(e) => setMoney(e.target.value)} disabled />
+                            <label htmlFor="amount">amount:</label>
+                            <input type="number" className="form-control" id="amount" placeholder="Amount" value={amount} onChange={(e) => setamount(e.target.value)} disabled />
                         </div>
                         <div className="d-flex justify-content-center mt-4">
                          { showSuccess != 'delete' &&   <button type="submit" className="btn btn-primary me-4">Update Account</button>  }

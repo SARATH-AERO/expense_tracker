@@ -6,6 +6,7 @@ import { AppContext } from '../context/AppContext';
 import Transactions from '../pages/Transactions';
 import { data } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
+import { type } from '@testing-library/user-event/dist/type';
 
 const NewTransactionExpense = () => {
   const { transactions, addTransaction, accounts, setAccounts } = useContext(AppContext);
@@ -17,6 +18,7 @@ const NewTransactionExpense = () => {
     note: ''
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     if (accounts.length > 0 && formData.from === '') {
@@ -31,18 +33,19 @@ const NewTransactionExpense = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSuccess('');
     const account = accounts.find(acc => acc.name === formData.from);
     const amount = parseFloat(formData.amount);
 
     if (account.group === 'Cash' || account.group === 'Bank Account') {
-      if (amount > account.money) {
-        setError('Not enough money');
+      if (amount > account.amount) {
+        setError('Not enough amount');
         return;
       } else {
-        account.money -= amount;
+        account.amount -= amount;
       }
     } else if (account.group === 'Credit') {
-      account.money += amount;
+      account.amount += amount;
     }
 
     setAccounts([...accounts]);
@@ -51,9 +54,11 @@ const NewTransactionExpense = () => {
       amount: formData.amount,
       tag: formData.tag,
       date: formData.date,
-      note: formData.note
+      note: formData.note,
+      transType : 'Expense'
     });
     setError('');
+    setSuccess('Expense amount spent successful');
   };
 
   const handleInputChange = (e) => {
@@ -130,9 +135,12 @@ const NewTransactionExpense = () => {
         <Form.Label>Note</Form.Label>
         <Form.Control type="text" name="note" value={formData.note} onChange={handleInputChange} style={{marginBottom:'10px'}} />
       </Form.Group>
+      <div className="d-flex justify-content-center mt-3">
       <Button variant="primary" type="submit" style={{marginTop:'2opx'}}>
         Add Expense
       </Button>
+      </div>
+      {success && <div className="text-success mt-3">{success}</div>}
     </Form>
   );
 };

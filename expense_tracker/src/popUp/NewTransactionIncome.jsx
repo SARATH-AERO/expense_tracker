@@ -4,10 +4,26 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 
-const NewTransactionIncome = ({ formData, handleInputChange, handleDateChange, handleSubmit }) => {
+const NewTransactionIncome = ({ handleSubmit }) => {
   const { accounts, setAccounts, addTransaction, transactions } = useContext(AppContext);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [formData, setFormData] = useState({
+    from: '',
+    amount: '',
+    tag: '',
+    date: new Date(),
+    note: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleDateChange = (date) => {
+    setFormData({ ...formData, date });
+  };
 
   useEffect(() => {
     if (accounts.length > 0) {
@@ -37,7 +53,7 @@ const NewTransactionIncome = ({ formData, handleInputChange, handleDateChange, h
       return;
     }
 
-    toAccount.money += amount;
+    toAccount.amount += amount;
 
     setAccounts([...accounts]);
     addTransaction({
@@ -45,7 +61,8 @@ const NewTransactionIncome = ({ formData, handleInputChange, handleDateChange, h
       amount: formData.amount,
       tag: formData.to,
       date: formData.date,
-      note: formData.note
+      note: formData.note,
+      transType : 'Income'
     });
 
     setError('');

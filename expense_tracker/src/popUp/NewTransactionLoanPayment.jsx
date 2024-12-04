@@ -4,10 +4,26 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 
-const NewTransactionLoanPayment = ({ formData, handleInputChange, handleDateChange, handleSubmit }) => {
+const NewTransactionLoanPayment = ({   handleSubmit }) => {
   const { accounts, setAccounts, addTransaction, transactions } = useContext(AppContext);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [formData, setFormData] = useState({
+    from: '',
+    amount: '',
+    tag: '',
+    date: new Date(),
+    note: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleDateChange = (date) => {
+    setFormData({ ...formData, date });
+  };
 
   useEffect(() => {
     if (accounts.length > 0) {
@@ -17,13 +33,19 @@ const NewTransactionLoanPayment = ({ formData, handleInputChange, handleDateChan
       if (!formData.to) {
         handleInputChange({ target: { name: 'to', value: accounts.find(acc => acc.group === 'Credit' || acc.group === 'Loan').name } });
       }
+      if (!formData.amount) {
+        handleInputChange({ target: { name: 'amount', value: 0 } });
+      }
+      if (!formData.note) {
+        handleInputChange({ target: { name: 'note', value: '' } });
+      }
     }
   }, [accounts, formData.from, formData.to, handleInputChange]);
 
-  useEffect ( () => {
-    console.log(accounts);
-    console.log(transactions);
-  }, [accounts, transactions]);
+  // useEffect ( () => {
+  //   console.log(accounts);
+  //   console.log(transactions);
+  // }, [accounts, transactions]);
 
   const validateAndSubmit = (e) => {
     e.preventDefault();
@@ -33,20 +55,20 @@ const NewTransactionLoanPayment = ({ formData, handleInputChange, handleDateChan
     const toAccount = accounts.find(acc => acc.name === formData.to);
     const amount = parseFloat(formData.amount);
 
-    if (formData.from !== 'Others' && amount > fromAccount.money) {
-      setError('Not enough money');
+    if (formData.from !== 'Others' && amount > fromAccount.amount) {
+      setError('Not enough amount');
       return;
     }
 
-    if (amount > toAccount.money) {
+    if (amount > toAccount.amount) {
       setError('Your payment amount exceeds the loan amount');
       return;
     }
 
     if (formData.from !== 'Others') {
-      fromAccount.money -= amount;
+      fromAccount.amount -= amount;
     }
-    toAccount.money -= amount;
+    toAccount.amount -= amount;
 
     setAccounts([...accounts]);
     addTransaction({
@@ -54,7 +76,8 @@ const NewTransactionLoanPayment = ({ formData, handleInputChange, handleDateChan
       amount: formData.amount,
       tag: formData.to,
       date: formData.date,
-      note: formData.note
+      note: formData.note,
+      transType : 'Loan Payment'
     });
 
     setError('');
