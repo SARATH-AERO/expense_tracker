@@ -71,7 +71,7 @@ const NewTransactionTransfer = ({  handleSubmit }) => {
       tag: formData.to,
       date: formData.date,
       note: formData.note,
-      transType : 'Sef-Transfer'
+      transType : 'Self-Transfer'
     });
     setError('');
     setSuccess('Amount transfer successful');

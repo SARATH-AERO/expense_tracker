@@ -128,44 +128,45 @@ const Transactions = () => {
   const handleDelete = (index) => {
     const transaction = transactions[index];
     let updatedAccounts = [...accounts];
-
-    if (transaction.transType == 'Expense') {
+    const transactionAmount = parseFloat(transaction.amount); // Convert to number
+  
+    if (transaction.transType === 'Expense') {
       updatedAccounts = updatedAccounts.map(account => {
         if (account.name === transaction.from) {
-          return { ...account, amount: account.amount + transaction.amount };
+          return { ...account, amount: account.amount + transactionAmount };
         }
         return account;
       });
-    } else if (transaction.transType == 'Sef-Transfer') {
+    } else if (transaction.transType === 'Self-Transfer') {
       updatedAccounts = updatedAccounts.map(account => {
         if (account.name === transaction.from) {
-          return { ...account, amount: account.amount + transaction.amount };
+          return { ...account, amount: account.amount + transactionAmount };
         } else if (account.name === transaction.tag) {
-          return { ...account, amount: account.amount - transaction.amount };
+          return { ...account, amount: account.amount - transactionAmount };
         }
         return account;
       });
-    } else if (transaction.transType == 'Income') {
+    } else if (transaction.transType === 'Income') {
       updatedAccounts = updatedAccounts.map(account => {
         if (account.name === transaction.tag) {
-          return { ...account, amount: account.amount - transaction.amount };
+          return { ...account, amount: account.amount - transactionAmount };
         }
         return account;
       });
-    } else if (transaction.transType == 'Loan Payment') {
+    } else if (transaction.transType === 'Loan Payment') {
       updatedAccounts = updatedAccounts.map(account => {
         if (account.name === transaction.from) {
-          return { ...account, amount: account.amount + transaction.amount };
+          return { ...account, amount: account.amount + transactionAmount };
         } else if (account.name === transaction.tag) {
-          return { ...account, amount: account.amount + transaction.amount };
+          return { ...account, amount: account.amount + transactionAmount };
         }
         return account;
       });
     }
-
+  
     setAccounts(updatedAccounts);
     setTransactions(transactions.filter((_, i) => i !== index));
-
+  
     setModalContent({
       from: transaction.from,
       amount: transaction.amount,
@@ -175,7 +176,7 @@ const Transactions = () => {
       type: transaction.transType,
       message: 'Transaction revert successful'
     });
-    setShowModal(true)
+    setShowModal(true);
   };
 
   const styles = {
