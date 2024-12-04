@@ -3,7 +3,7 @@ import { Modal, Button, Form } from 'react-bootstrap';
 import Select from 'react-select';
 import { AppContext } from '../context/AppContext';
 
-const FilterModal = ({ show, handleClose }) => {
+const FilterModal = ({ show,applyFilters ,  handleClose }) => {
   const { accounts } = useContext(AppContext);
   const [selectedAccounts, setSelectedAccounts] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -40,7 +40,7 @@ const FilterModal = ({ show, handleClose }) => {
   };
 
   const handleApply = () => {
-    // Handle the apply logic here
+    applyFilters(selectedAccounts.map(option => option.value), selectedTags.map(option => option.value));
     handleClose();
   };
 

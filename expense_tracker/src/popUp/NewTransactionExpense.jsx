@@ -20,6 +20,8 @@ const NewTransactionExpense = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const toAccounts = accounts.filter(account => account.group !== 'Loan');
+
   useEffect(() => {
     if (accounts.length > 0 && formData.from === '') {
       setFormData(prevState => ({
@@ -86,7 +88,7 @@ const NewTransactionExpense = () => {
           value={formData.from}
           onChange={handleInputChange}
         >
-          {accounts.map((account) => (
+          {toAccounts.map((account) => (
             <option key={account.name} value={account.name}>{account.name}</option>
           ))}
         </select>

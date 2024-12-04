@@ -17,16 +17,19 @@ const Transactions = () => {
   const [endDate, setEndDate] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const { accounts, setAccounts ,transactions, setTransactions } = useContext(AppContext);
+  const { accounts, setAccounts, transactions, setTransactions } = useContext(AppContext);
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState({});
+  const [selectedAccounts, setSelectedAccounts] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+  // const [filteredTransactions, setfilteredTransactions] = useState([]);
 
   useEffect(() => {
     const currentDate = getCurrentDate();
     setSelectedDate(currentDate);
   }, []);
 
-  useEffect( () => {
+  useEffect(() => {
     console.log(accounts);
   }, [accounts])
 
@@ -75,24 +78,44 @@ const Transactions = () => {
     switch (range) {
       case 'Today':
         setSelectedDate(getCurrentDate());
+        setStartDate(new Date());
+        setEndDate(new Date());
         break;
       case 'Yesterday':
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
         setSelectedDate(getYesterdayDate());
+        setStartDate(yesterday);
+        setEndDate(yesterday);
         break;
       case 'Last 7 Days':
+        const last7Days = new Date();
+        last7Days.setDate(last7Days.getDate() - 6);
         setSelectedDate(getLast7Days());
+        setStartDate(last7Days);
+        setEndDate(new Date());
         break;
       case 'Last 30 Days':
+        const last30Days = new Date();
+        last30Days.setDate(last30Days.getDate() - 29);
         setSelectedDate(getLast30Days());
+        setStartDate(last30Days);
+        setEndDate(new Date());
         break;
       case 'This Month':
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         setSelectedDate(getThisMonth());
+        setStartDate(startOfMonth);
+        setEndDate(today);
         break;
       case 'Custom Date':
         setShowDatePicker(true);
         break;
       default:
         setSelectedDate(getCurrentDate());
+        setStartDate(new Date());
+        setEndDate(new Date());
     }
   };
 
@@ -129,7 +152,7 @@ const Transactions = () => {
     const transaction = transactions[index];
     let updatedAccounts = [...accounts];
     const transactionAmount = parseFloat(transaction.amount); // Convert to number
-  
+
     if (transaction.transType === 'Expense') {
       updatedAccounts = updatedAccounts.map(account => {
         if (account.name === transaction.from) {
@@ -163,10 +186,10 @@ const Transactions = () => {
         return account;
       });
     }
-  
+
     setAccounts(updatedAccounts);
     setTransactions(transactions.filter((_, i) => i !== index));
-  
+
     setModalContent({
       from: transaction.from,
       amount: transaction.amount,
@@ -177,6 +200,81 @@ const Transactions = () => {
       message: 'Transaction revert successful'
     });
     setShowModal(true);
+  };
+
+  const applyFilters = (accounts, selectedTags) => {
+
+    setSelectedAccounts(accounts);
+    setSelectedTags(selectedTags);
+    // console.log(selectedAccounts);
+    // console.log(selectedTags);
+  };
+
+//   useEffect(() => {
+//     const filteredTransactions1 = transactions.filter(transaction => {
+//         const transactionDate = new Date(transaction.date);
+//         if (!startDate || !endDate) return true;
+//         const inclusiveEndDate = new Date(endDate);
+//         inclusiveEndDate.setHours(23, 59, 59, 999);
+
+//         const matchesDateRange = transactionDate >= startDate && transactionDate <= inclusiveEndDate;
+//         const matchesAccount = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.from) || selectedAccounts.includes(transaction.to);
+//         const matchesCategory = selectedTags.length === 0 || selectedTags.includes(transaction.tag);
+
+//         console.log('Transaction:', transaction);
+//         console.log('Matches Date Range:', matchesDateRange);
+//         console.log('Matches Account:', matchesAccount);
+//         console.log('Matches Category:', matchesCategory);
+
+//         return matchesDateRange && matchesAccount && matchesCategory;
+//       });
+//     setfilteredTransactions( filteredTransactions1);
+// console.log('useeffect');
+
+//   }, [selectedAccounts, selectedTags, startDate, endDate, transactions]);
+
+  const filteredTransactions = transactions.filter(transaction => {
+    const transactionDate = new Date(transaction.date);
+    if (!startDate || !endDate) return true;
+    const inclusiveEndDate = new Date(endDate);
+    inclusiveEndDate.setHours(23, 59, 59, 999);
+  
+    const matchesDateRange = transactionDate >= startDate && transactionDate <= inclusiveEndDate;
+    const matchesAccount = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.from) || selectedAccounts.includes(transaction.to);
+    const matchesCategory = selectedTags.length === 0 || selectedTags.includes(transaction.tag);
+  
+    console.log('Transaction:', transaction);
+    console.log('Matches Date Range:', matchesDateRange);
+    console.log('Matches Account:', matchesAccount);
+    console.log('Matches Category:', matchesCategory);
+
+    return matchesDateRange && matchesAccount && matchesCategory;
+  });
+
+  const getAmountStyle = (type) => {
+    switch (type) {
+      case 'Expense':
+      case 'Loan Payment':
+        return { color: 'red', fontFamily: 'Roboto Mono, monospace', fontWeight: '500', fontSize: '20px', textAlign: 'right' };
+      case 'Income':
+        return { color: '#21BA45', fontFamily: 'Roboto Mono, monospace', fontWeight: '500', fontSize: '20px', textAlign: 'right' };
+      case 'Self-Transfer':
+        return { color: 'blue', fontFamily: 'Roboto Mono, monospace', fontWeight: '500', fontSize: '20px', textAlign: 'right' };
+      default:
+        return {};
+    }
+  };
+
+  const getAmountPrefix = (type) => {
+    switch (type) {
+      case 'Expense':
+      case 'Loan Payment':
+        return '-';
+      case 'Income':
+        return '+';
+      default:
+        return '';
+    }
   };
 
   const styles = {
@@ -195,6 +293,8 @@ const Transactions = () => {
     },
   };
 
+
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center', height: '100vh', margin: 0, padding: 0 }}>
       <div style={{ width: '100%', margin: 0, padding: 0 }}>
@@ -207,12 +307,8 @@ const Transactions = () => {
                     <FaPlus style={{ marginRight: '8px' }} /> NEW TRANSACTION
                   </Button>
                   <Dropdown>
-                    <Dropdown.Toggle
-                      as={Button}
-                      variant="secondary"
-                      style={styles.noCaret}
-                    >
-                      <FaCalendarAlt style={styles.calendarIcon} /> {selectedDate}
+                    <Dropdown.Toggle as={Button} variant="secondary">
+                      <FaCalendarAlt /> {selectedDate}
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
                       <Dropdown.Item onClick={() => handleDateChange('Today')}>Today</Dropdown.Item>
@@ -238,16 +334,22 @@ const Transactions = () => {
               <th>Type</th>
               <th>Action</th>
             </tr>
-            {transactions.map((transaction, index) => (
+            {filteredTransactions.map((transaction, index) => (
               <tr key={index}>
                 <td>{transaction.from}</td>
-                <td>{transaction.amount}</td>
+                <td style={getAmountStyle(transaction.transType)}>
+                  {getAmountPrefix(transaction.transType)}{transaction.amount}
+                </td>
                 <td>{transaction.tag}</td>
                 <td>{formatDate(transaction.date)}</td>
                 <td>{transaction.note}</td>
                 <td>{transaction.transType}</td>
                 <td style={{ textAlign: 'center' }}>
-                  <Button variant="danger" onClick={() => handleDelete(index)} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Button
+                    variant="danger"
+                    onClick={() => handleDelete(index)}
+                    style={{ display: 'flex', alignItems: 'center', padding: '5px 10px', fontSize: '12px' }}
+                  >
                     <FaTrash style={{ cursor: 'pointer', marginRight: '8px' }} /> DELETE
                   </Button>
                 </td>
@@ -256,8 +358,7 @@ const Transactions = () => {
           </tbody>
         </Table>
 
-
-        {showDatePicker == true && (
+        {showDatePicker && (
           <Modal show={showDatePicker} onHide={() => setShowDatePicker(false)}>
             <Modal.Header closeButton>
               <Modal.Title>Select Date Range</Modal.Title>
@@ -281,27 +382,28 @@ const Transactions = () => {
         )}
 
         {addPopShow && <NewTransactionModal show={addPopShow} onClose={handleClose} />}
-        <FilterModal show={showFilterModal} handleClose={handleClose} />
+        <FilterModal show={showFilterModal} applyFilters={applyFilters} handleClose={handleClose} />
 
-    { showModal &&     <Modal show={showModal} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>{modalContent.message}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>From: {modalContent.from}</p>
-          <p>Amount: {modalContent.amount}</p>
-          <p>To: {modalContent.to}</p>
-          <p>Date: {formatDate(modalContent.date)}</p>
-          <p>Note: {modalContent.note}</p>
-          <p>Type: {modalContent.type}</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            OK
-          </Button>
-        </Modal.Footer>
-      </Modal>
-}
+        {showModal && (
+          <Modal show={showModal} onHide={handleClose}>
+            <Modal.Header closeButton>
+              <Modal.Title>{modalContent.message}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <p>From: {modalContent.from}</p>
+              <p>Amount: {modalContent.amount}</p>
+              <p>To: {modalContent.to}</p>
+              <p>Date: {formatDate(modalContent.date)}</p>
+              <p>Note: {modalContent.note}</p>
+              <p>Type: {modalContent.type}</p>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleClose}>
+                OK
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        )}
       </div>
     </div>
   );
