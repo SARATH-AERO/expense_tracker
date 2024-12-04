@@ -10,18 +10,27 @@ const FilterModal = ({ show, handleClose }) => {
   const [accountOptions, setAccountOptions] = useState([]);
 
   useEffect(() => {
-    console.log('Accounts:', accounts); // Debugging line
+    // console.log('Accounts:', accounts); // Debugging line
     const options = accounts.map(account1 => ({ value: account1.name, label: account1.name }));
-    console.log('Account Options:', options); // Debugging line
+    // console.log('Account Options:', options); // Debugging line
     setAccountOptions(options);
   }, [accounts]);
 
   const tagOptions = [
     { value: 'Food', label: 'Food' },
+    { value: 'Groceries', label: 'Groceries' },
+    { value: 'Rent', label: 'Rent' },
+    { value: 'Income Tax', label: 'Income Tax' },
+    { value: 'shoppings', label: 'shoppings' },
+    { value: 'Food', label: 'Food' },
+    { value: 'clothes', label: 'clothes' },
+    { value: 'vacation', label: 'vacation' },
+    { value: 'Salary', label: 'Salary' },
+    { value: 'Bonus', label: 'Bonus' },
     { value: 'Transport', label: 'Transport' },
     { value: 'Utilities', label: 'Utilities' },
     { value: 'Entertainment', label: 'Entertainment' },
-    { value: 'Health', label: 'Health' },
+    { value: 'Hospital', label: 'Hospital' },
     // Add more tags as needed
   ];
 

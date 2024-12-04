@@ -25,8 +25,8 @@ const Accounts = () => {
     const groupedAccounts = {
         Cash: [],
         'Bank Account': [],
-        Loan: [],
         Credit: [],
+        Loan: [],
         ...accounts.reduce((acc, account) => {
             if (!acc[account.group]) {
                 acc[account.group] = [];
@@ -69,61 +69,59 @@ const Accounts = () => {
         setEditPopShow(true);
       };
 
+    
 
-    return (
-        <div style={{ display: 'flex', justifyContent: 'center', height: '100vh', margin: 0, padding: 0 }}>
-            <div style={{ width: '100%', margin: 0, padding: 0 }}>
-                <Table striped bordered hover style={{ margin: 0 }}>
-                    <tbody>
-                        <tr>
-                            <td>
-                                {/* <div style={{ display: 'flex', alignItems: 'center' }}> */}
-                                <Button variant="primary" onClick={handleShow} style={{ display: 'flex', alignItems: 'center' }}>
-                                    <FaPlus style={{ marginRight: '8px' }} /> NEW
-                                </Button>
-                                {/* </div> */}
-                            </td>
-                        </tr>
-                        {Object.keys(groupedAccounts).map((group, index) => (
-              <React.Fragment key={index}>
+
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', minHeight: '100vh', margin: 0, padding: 0 }}>
+          <div style={{ width: '100%', margin: 0, padding: 0 }}>
+            <Table striped bordered hover style={{ margin: 0 }}>
+              <tbody>
                 <tr>
-                  <td style={{ backgroundColor: '#2F3E8A', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {getIcon(group)} <span style={{ marginLeft: '8px' }}>{group}</span>
-                    </div>
-                    <div>
-                      {formatAmount(getTotalAmount(group), group)}
-                    </div>
+                  <td colSpan="3">
+                    <Button variant="primary" onClick={handleShow} style={{ display: 'flex', alignItems: 'center' }}>
+                      <FaPlus style={{ marginRight: '8px' }} /> ADD NEW ACCOUNT
+                    </Button>
                   </td>
                 </tr>
-                {groupedAccounts[group].length > 0 ? (
-                  groupedAccounts[group].map((account, idx) => (
-                    <tr key={idx}>
-                      <td style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>{account.name}</span>
-                        <span style={{}}> {formatAmount(account.money, group)}</span>
-                        <Button variant="primary" onClick={() => handleEdit(account)} style={{ display: 'flex', alignItems: 'center' }}>
-                            <FaEdit style={{ cursor: 'pointer', marginRight: '8px' }}  /> 
-                                     EDIT
-                        </Button>
+                {Object.keys(groupedAccounts).map((group, index) => (
+                  <React.Fragment key={index}>
+                    <tr>
+                      <td colSpan="3" className="d-flex justify-content-between align-items-center" style={{ backgroundColor: '#2F3E8A', color: 'white', marginRight:'-527px' }}>
+                        <div className="d-flex align-items-center">
+                          {getIcon(group)} <span style={{ marginLeft: '8px' }}>{group}</span>
+                        </div>
+                        <div>
+                          Total Amount =  {formatAmount(getTotalAmount(group), group)}
+                        </div>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td>No accounts</td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </Table>
-        {addPopShow && <AddPopUp show={addPopShow} onClose={handleClose} />}
-        {editPopShow && <EditAccountPopUP show={editPopShow} onClose={handleClose} account={selectedAccount} />}
-      </div>
-    </div>
-  );
-};
-
+                    {groupedAccounts[group].length > 0 ? (
+                      groupedAccounts[group].map((account, idx) => (
+                        <tr key={idx}>
+                          <td> {account.name}</td>
+                          <td style={{textAlign:'right'}}> {formatAmount(account.money, group)}</td>
+                          <td style={{display: 'flex', justifyContent: 'flex-end'}}>
+                            {<Button variant="primary" onClick={() => handleEdit(account)} style={{ display: 'flex', alignItems: 'center' }}>
+                              <FaEdit style={{ cursor: 'pointer', marginRight: '8px' }} /> EDIT
+                            </Button>}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="3">No accounts</td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </Table>
+            {addPopShow && <AddPopUp show={addPopShow} onClose={handleClose} />}
+            {editPopShow && <EditAccountPopUP show={editPopShow} onClose={handleClose} account={selectedAccount} />}
+          </div>
+        </div>
+      );
+    }
 
 export default Accounts;

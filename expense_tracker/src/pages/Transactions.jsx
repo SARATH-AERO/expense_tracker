@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import FilterModal from '../popUp/FilterModal';
+import NewTransactionModal from '../popUp/NewTransactionModal';
 
 
 const Transactions = () => {
@@ -19,11 +20,14 @@ const Transactions = () => {
     const { accounts } = useContext(AppContext);
 
     useEffect(() => {
-        setSelectedDate(getCurrentDate());
+      const currentDate = getCurrentDate();
+      setSelectedDate(currentDate);
       }, []);
     
-    const handleShow = () => {
-        setAddPopShow(!addPopShow);
+    const handleShow = ({message}) => {
+      if( message === 'new expense'){
+          setAddPopShow(true);
+      }
     }
 
     const getCurrentDate = () => {
@@ -98,7 +102,10 @@ const Transactions = () => {
       };
 
       const handleFilterShow = () => setShowFilterModal(true);
-      const handleClose = () => setShowFilterModal(false);
+      const handleClose = () => {
+        setShowFilterModal(false);
+        setAddPopShow(false);
+      }
 
       const styles = {
         noCaret: {
@@ -124,7 +131,7 @@ const Transactions = () => {
                 <tr>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <Button variant="primary" onClick={handleShow} style={{ display: 'flex', alignItems: 'center', marginRight: '10px' }}>
+                      <Button variant="primary" onClick={() => handleShow({ message: 'new expense' })} style={{ display: 'flex', alignItems: 'center', marginRight: '10px' }}>
                         <FaPlus style={{ marginRight: '8px' }} /> NEW TRANSACTION
                         </Button>
                   <Dropdown>
@@ -182,6 +189,7 @@ const Transactions = () => {
           </Modal>
         )}
 
+        { addPopShow && <NewTransactionModal show={addPopShow} onClose={handleClose}/>}
        <FilterModal show={showFilterModal} handleClose={handleClose} />
           </div>
         </div>
