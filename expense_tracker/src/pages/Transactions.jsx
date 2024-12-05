@@ -27,6 +27,24 @@ const Transactions = () => {
   const [totalSelfTransfer, setTotalSelfTransfer] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   // const [filteredTransactions, setfilteredTransactions] = useState([]);
+  const [hoveredItem, setHoveredItem] = useState(null);
+
+  const handleMouseEnter = (item) => {
+    setHoveredItem(item);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredItem(null);
+  };
+
+  const dropdownItems = [
+    'Today',
+    'Yesterday',
+    'Last 7 Days',
+    'Last 30 Days',
+    'This Month',
+    'Custom Date',
+  ];
 
   useEffect(() => {
     const today = new Date();
@@ -264,26 +282,26 @@ const Transactions = () => {
     }
   };
 
-  const styles = {
-    noCaret: {
-      display: 'flex',
-      alignItems: 'center',
-      marginRight: '10px',
-    },
-    button: {
-      display: 'flex',
-      alignItems: 'center',
-      marginRight: '10px',
-    },
-    calendarIcon: {
-      marginRight: '8px',
-    },
-  };
+  // const styles = {
+  //   noCaret: {
+  //     display: 'flex',
+  //     alignItems: 'center',
+  //     marginRight: '10px',
+  //   },
+  //   button: {
+  //     display: 'flex',
+  //     alignItems: 'center',
+  //     marginRight: '10px',
+  //   },
+  //   calendarIcon: {
+  //     marginRight: '8px',
+  //   },
+  // };
 
 
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', height: '100vh', margin: 0, padding: 0 }}>
+    <div style={{ display: 'flex', justifyContent: 'center', minHeight: '100vh', margin: 0, padding: 0}}>
       <div style={{ width: '100%', margin: 0, padding: 0 }}>
         <Table striped bordered hover style={{ margin: 0 }}>
           <tbody>
@@ -294,19 +312,27 @@ const Transactions = () => {
                     <FaPlus style={{ marginRight: '8px' }} /> NEW TRANSACTION
                   </Button>
                   <Dropdown>
-                    <Dropdown.Toggle as={Button} variant="secondary">
+                    <Dropdown.Toggle as={Button} variant="secondary" style={{ backgroundColor: '#4CAF50', color: 'white' }}>
                       <FaCalendarAlt /> {selectedDate}
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
-                      <Dropdown.Item onClick={() => handleDateChange('Today')}>Today</Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleDateChange('Yesterday')}>Yesterday</Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleDateChange('Last 7 Days')}>Last 7 Days</Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleDateChange('Last 30 Days')}>Last 30 Days</Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleDateChange('This Month')}>This Month</Dropdown.Item>
-                      <Dropdown.Item onClick={() => handleDateChange('Custom Date')}>Custom Date</Dropdown.Item>
+                      {dropdownItems.map((item) => (
+                        <Dropdown.Item
+                          key={item}
+                          onClick={() => handleDateChange(item)}
+                          onMouseEnter={() => handleMouseEnter(item)}
+                          onMouseLeave={handleMouseLeave}
+                          style={{
+                            backgroundColor: hoveredItem === item ? '#4CAF50' : 'white', // Highlight on hover
+                            color: hoveredItem === item ? 'white' : 'black', // Change text color on hover
+                          }}
+                        >
+                          {item}
+                        </Dropdown.Item>
+                      ))}
                     </Dropdown.Menu>
                   </Dropdown>
-                  <Button variant="secondary" onClick={handleFilterShow} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Button variant="secondary" onClick={handleFilterShow} style={{ display: 'flex', alignItems: 'center', backgroundColor: '#e67300' }}>
                     <FaFilter style={{ marginRight: '8px' }} /> Filter
                   </Button>
                   <Button variant="secondary" onClick={resetFilters} style={{ display: 'flex', alignItems: 'center' }}>
@@ -345,18 +371,18 @@ const Transactions = () => {
                 </td>
               </tr>
             ))}
-             <tr>
-            <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Income:</td>
-            <td style={{ color: 'green', fontWeight: '500', fontSize: '20px', textAlign: 'right' , fontFamily: 'Roboto Mono, monospace'}}>+{totalIncome}</td>
-          </tr>
-          <tr>
-            <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Self-Transfer:</td>
-            <td style={{ color: 'blue',fontWeight: '500', fontSize: '20px', textAlign: 'right' , fontFamily: 'Roboto Mono, monospace'}}>{totalSelfTransfer}</td>
-          </tr>
-          <tr>
-            <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Expense:</td>
-            <td style={{ color: 'red', fontWeight: '500', fontSize: '20px', textAlign: 'right' , fontFamily: 'Roboto Mono, monospace'}}>-{totalExpense}</td>
-          </tr>
+            <tr>
+              <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Income:</td>
+              <td style={{ color: 'green', fontWeight: '500', fontSize: '20px', textAlign: 'right', fontFamily: 'Roboto Mono, monospace' }}>+{totalIncome}</td>
+            </tr>
+            <tr>
+              <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Self-Transfer:</td>
+              <td style={{ color: 'blue', fontWeight: '500', fontSize: '20px', textAlign: 'right', fontFamily: 'Roboto Mono, monospace' }}>{totalSelfTransfer}</td>
+            </tr>
+            <tr>
+              <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Expense:</td>
+              <td style={{ color: 'red', fontWeight: '500', fontSize: '20px', textAlign: 'right', fontFamily: 'Roboto Mono, monospace' }}>-{totalExpense}</td>
+            </tr>
           </tbody>
         </Table>
 

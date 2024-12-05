@@ -70,7 +70,7 @@ const Accounts = () => {
   };
 
 
-
+  const colors = ['#8B4513', '#800080', '#2F4F4F', '#483D8B']; // Array of dark colors
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', minHeight: '100vh', margin: 0, padding: 0 }}>
@@ -87,7 +87,7 @@ const Accounts = () => {
             {Object.keys(groupedAccounts).map((group, index) => (
               <React.Fragment key={index}>
                 <tr>
-                  <td colSpan="3" style={{ backgroundColor: '#2F3E8A', color: 'white', padding: '10px' }}>
+                  <td colSpan="3" style={{ backgroundColor: colors[index % colors.length], color: 'white', padding: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         {getIcon(group)} <span style={{ marginLeft: '8px' }}>{group}</span>

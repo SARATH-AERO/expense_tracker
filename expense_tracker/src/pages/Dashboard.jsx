@@ -87,14 +87,21 @@ const Dashboard = () => {
     }
   };
 
+  function getCurrentMonthYear() {
+    const date = new Date();
+    const options = { month: 'long', year: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  }
+
   return (
     <div>
+        <h2 style={{textAlign:'center'}}>{getCurrentMonthYear()}</h2>
       <h2>Summary Cards</h2>
       <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '20px' }}>
         <Card style={{ width: '18rem' }}>
           <Card.Body>
             <Card.Title>Total Balance</Card.Title>
-            <Card.Text>{totalBalance}</Card.Text>
+            <Card.Text style={{ color: 'green' }}>+{totalBalance}</Card.Text>
           </Card.Body>
         </Card>
         <Card style={{ width: '18rem' }}>
