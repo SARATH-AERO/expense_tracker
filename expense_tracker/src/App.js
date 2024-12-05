@@ -8,10 +8,7 @@ const App = () => {
   return (
     <AppProvider>
       <div style={styles.app}>
-        {/* Header remains at the top */}
         <Header />
-        
-        {/* Sidebar and MainContent go below the header */}
         <div style={styles.main}>
           <Sidebar />
           <MainContent />

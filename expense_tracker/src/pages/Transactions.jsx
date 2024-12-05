@@ -1,12 +1,13 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Button, Table, Dropdown, Modal } from 'react-bootstrap';
-import { FaPlus, FaCalendarAlt, FaFilter, FaTrash } from 'react-icons/fa';
+import { Button, Table, Dropdown, Modal, Form } from 'react-bootstrap';
+import { FaPlus, FaCalendarAlt, FaFilter, FaTrash, FaFileExcel } from 'react-icons/fa';
 import { AppContext, AppProvider } from '../context/AppContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import FilterModal from '../popUp/FilterModal';
 import NewTransactionModal from '../popUp/NewTransactionModal';
+import * as XLSX from 'xlsx';
 
 
 const Transactions = () => {
@@ -28,6 +29,7 @@ const Transactions = () => {
   const [totalExpense, setTotalExpense] = useState(0);
   // const [filteredTransactions, setfilteredTransactions] = useState([]);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [transactionType, setTransactionType] = useState('All Types');
 
   const handleMouseEnter = (item) => {
     setHoveredItem(item);
@@ -57,7 +59,7 @@ const Transactions = () => {
 
   useEffect(() => {
     filterTransactions();
-  }, [transactions, startDate, endDate, selectedAccounts, selectedTags]);
+  }, [transactions, startDate, endDate, selectedAccounts, selectedTags, transactionType]);
 
   useEffect(() => {
     calculateTotals();
@@ -82,6 +84,7 @@ const Transactions = () => {
     setEndDate(end);
     setSelectedAccounts([]);
     setSelectedTags([]);
+    setTransactionType('All Types');
   };
 
   const handleDateChange = (range) => {
@@ -231,11 +234,25 @@ const Transactions = () => {
       const matchesDateRange = transactionDate >= startDate && transactionDate <= inclusiveEndDate;
       const matchesAccount = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.from) || selectedAccounts.includes(transaction.to);
       const matchesCategory = selectedTags.length === 0 || selectedTags.includes(transaction.tag);
+      const matchesType = transactionType === 'All Types' || transaction.transType === transactionType;
 
-      return matchesDateRange && matchesAccount && matchesCategory;
+      return matchesDateRange && matchesAccount && matchesCategory && matchesType;
     });
 
     setFilteredTransactions(filtered);
+  };
+
+  const handleGenerateReport = () => {
+    const worksheet = XLSX.utils.json_to_sheet(filteredTransactions.map(transaction => ({
+      From: transaction.from,
+      Amount: transaction.amount,
+      To: transaction.tag,
+      'Transaction Date': transaction.date.toLocaleDateString(),
+      'Transaction Type': transaction.transType,
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
+    XLSX.writeFile(workbook, 'Transactions_Report.xlsx');
   };
 
   const calculateTotals = () => {
@@ -298,10 +315,33 @@ const Transactions = () => {
   //   },
   // };
 
+  const styles = {
+    dropdownToggle: {
+      backgroundColor: '#4CAF50',
+      color: 'white',
+    },
+    dropdownItem: (isHovered) => ({
+      backgroundColor: isHovered ? '#4CAF50' : 'white',
+      color: isHovered ? 'white' : 'black',
+    }),
+    filterButton: {
+      display: 'flex',
+      alignItems: 'center',
+      backgroundColor: '#e67300',
+    },
+    excelButton: {
+      display: 'flex',
+      alignItems: 'center',
+      backgroundColor: 'green',
+      color: 'white',
+      marginRight: '8px',
+    },
+  };
+
 
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', minHeight: '100vh', margin: 0, padding: 0}}>
+    <div style={{ display: 'flex', justifyContent: 'center', minHeight: '100vh', margin: 0, padding: 0 }}>
       <div style={{ width: '100%', margin: 0, padding: 0 }}>
         <Table striped bordered hover style={{ margin: 0 }}>
           <tbody>
@@ -334,6 +374,16 @@ const Transactions = () => {
                   </Dropdown>
                   <Button variant="secondary" onClick={handleFilterShow} style={{ display: 'flex', alignItems: 'center', backgroundColor: '#e67300' }}>
                     <FaFilter style={{ marginRight: '8px' }} /> Filter
+                  </Button>
+                  <Form.Control as="select" value={transactionType} onChange={(e) => setTransactionType(e.target.value)} style={{ width: '130px', marginLeft: '10px', backgroundColor: '#b33c00', color: 'white' }}>
+                    <option>All Types</option>
+                    <option>Expense</option>
+                    <option>Self-Transfer</option>
+                    <option>Income</option>
+                    <option>Loan Payment</option>
+                  </Form.Control>
+                  <Button variant="secondary" onClick={handleGenerateReport} style={styles.excelButton}>
+                    <FaFileExcel style={{ marginRight: '8px' }} /> Generate Excel
                   </Button>
                   <Button variant="secondary" onClick={resetFilters} style={{ display: 'flex', alignItems: 'center' }}>
                     RESET

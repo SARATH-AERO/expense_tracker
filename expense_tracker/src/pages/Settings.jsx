@@ -4,7 +4,7 @@
 const Settings = () => {
     return (
         <>
-        <h1>Settings Page</h1>
+        <h1>Coming Soon</h1>
         </>
     )
 }
