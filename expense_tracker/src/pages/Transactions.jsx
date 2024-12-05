@@ -22,6 +22,10 @@ const Transactions = () => {
   const [modalContent, setModalContent] = useState({});
   const [selectedAccounts, setSelectedAccounts] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalSelfTransfer, setTotalSelfTransfer] = useState(0);
+  const [totalExpense, setTotalExpense] = useState(0);
   // const [filteredTransactions, setfilteredTransactions] = useState([]);
 
   useEffect(() => {
@@ -32,6 +36,14 @@ const Transactions = () => {
     setStartDate(start);
     setEndDate(end);
   }, []);
+
+  useEffect(() => {
+    filterTransactions();
+  }, [transactions, startDate, endDate, selectedAccounts, selectedTags]);
+
+  useEffect(() => {
+    calculateTotals();
+  }, [filteredTransactions]);
 
   useEffect(() => {
     console.log(accounts);
@@ -190,19 +202,41 @@ const Transactions = () => {
     // console.log(selectedTags);
   };
 
-  const filteredTransactions = transactions.filter(transaction => {
-    const transactionDate = new Date(transaction.date);
-    if (!startDate || !endDate) return true;
+  const filterTransactions = () => {
+    const filtered = transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      if (!startDate || !endDate) return true;
 
-    const inclusiveEndDate = new Date(endDate);
-    inclusiveEndDate.setHours(23, 59, 59, 999);
+      const inclusiveEndDate = new Date(endDate);
+      inclusiveEndDate.setHours(23, 59, 59, 999);
 
-    const matchesDateRange = transactionDate >= startDate && transactionDate <= inclusiveEndDate;
-    const matchesAccount = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.from) || selectedAccounts.includes(transaction.tag);
-    const matchesCategory = selectedTags.length === 0 || selectedTags.includes(transaction.tag);
+      const matchesDateRange = transactionDate >= startDate && transactionDate <= inclusiveEndDate;
+      const matchesAccount = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.from) || selectedAccounts.includes(transaction.to);
+      const matchesCategory = selectedTags.length === 0 || selectedTags.includes(transaction.tag);
 
-    return matchesDateRange && matchesAccount && matchesCategory;
-  });
+      return matchesDateRange && matchesAccount && matchesCategory;
+    });
+
+    setFilteredTransactions(filtered);
+  };
+
+  const calculateTotals = () => {
+    const income = filteredTransactions
+      .filter(transaction => transaction.transType === 'Income')
+      .reduce((sum, transaction) => sum + parseFloat(transaction.amount), 0);
+
+    const selfTransfer = filteredTransactions
+      .filter(transaction => transaction.transType === 'Self-Transfer')
+      .reduce((sum, transaction) => sum + parseFloat(transaction.amount), 0);
+
+    const expense = filteredTransactions
+      .filter(transaction => transaction.transType === 'Expense' || transaction.transType === 'Loan Payment')
+      .reduce((sum, transaction) => sum + parseFloat(transaction.amount), 0);
+
+    setTotalIncome(income);
+    setTotalSelfTransfer(selfTransfer);
+    setTotalExpense(expense);
+  };
 
   const getAmountStyle = (type) => {
     switch (type) {
@@ -311,6 +345,18 @@ const Transactions = () => {
                 </td>
               </tr>
             ))}
+             <tr>
+            <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Income:</td>
+            <td style={{ color: 'green', textAlign: 'right',fontWeight: 'bold' }}>+{totalIncome}</td>
+          </tr>
+          <tr>
+            <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Self-Transfer:</td>
+            <td style={{ color: 'blue',textAlign: 'right', fontWeight: 'bold' }}>{totalSelfTransfer}</td>
+          </tr>
+          <tr>
+            <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Expense:</td>
+            <td style={{ color: 'red', textAlign: 'right',fontWeight: 'bold' }}>-{totalExpense}</td>
+          </tr>
           </tbody>
         </Table>
 
