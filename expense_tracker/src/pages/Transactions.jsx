@@ -25,8 +25,12 @@ const Transactions = () => {
   // const [filteredTransactions, setfilteredTransactions] = useState([]);
 
   useEffect(() => {
-    const currentDate = getCurrentDate();
-    setSelectedDate(currentDate);
+    const today = new Date();
+    const start = new Date(today.setHours(0, 0, 0, 0));
+    const end = new Date(today.setHours(23, 59, 59, 999));
+    setSelectedDate(`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`);
+    setStartDate(start);
+    setEndDate(end);
   }, []);
 
   useEffect(() => {
@@ -39,84 +43,60 @@ const Transactions = () => {
     }
   }
 
-  const getCurrentDate = () => {
+  const resetFilters = () => {
     const today = new Date();
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return today.toLocaleDateString(undefined, options);
+    const start = new Date(today.setHours(0, 0, 0, 0));
+    const end = new Date(today.setHours(23, 59, 59, 999));
+    setSelectedDate(`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`);
+    setStartDate(start);
+    setEndDate(end);
+    setSelectedAccounts([]);
+    setSelectedTags([]);
   };
 
-  function getYesterdayDate() {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return yesterday.toLocaleDateString(undefined, options);
-  }
-  function getLast7Days() {
-    const today = new Date();
-    const last7Days = new Date();
-    last7Days.setDate(today.getDate() - 6);
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return `${last7Days.toLocaleDateString(undefined, options)} - ${today.toLocaleDateString(undefined, options)}`;
-  }
-
-  function getLast30Days() {
-    const today = new Date();
-    const last30Days = new Date();
-    last30Days.setDate(today.getDate() - 29);
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return `${last30Days.toLocaleDateString(undefined, options)} - ${today.toLocaleDateString(undefined, options)}`;
-  }
-
-  function getThisMonth() {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return `${startOfMonth.toLocaleDateString(undefined, options)} - ${today.toLocaleDateString(undefined, options)}`;
-  }
-
   const handleDateChange = (range) => {
+    const today = new Date();
+    let start, end;
+
     switch (range) {
       case 'Today':
-        setSelectedDate(getCurrentDate());
-        setStartDate(new Date());
-        setEndDate(new Date());
+        start = new Date(today.setHours(0, 0, 0, 0));
+        end = new Date(today.setHours(23, 59, 59, 999));
         break;
       case 'Yesterday':
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        setSelectedDate(getYesterdayDate());
-        setStartDate(yesterday);
-        setEndDate(yesterday);
+        start = new Date(today.setDate(today.getDate() - 1));
+        start.setHours(0, 0, 0, 0);
+        end = new Date(today.setHours(23, 59, 59, 999));
         break;
       case 'Last 7 Days':
-        const last7Days = new Date();
-        last7Days.setDate(last7Days.getDate() - 6);
-        setSelectedDate(getLast7Days());
-        setStartDate(last7Days);
-        setEndDate(new Date());
+        start = new Date(today.setDate(today.getDate() - 6));
+        start.setHours(0, 0, 0, 0);
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
         break;
       case 'Last 30 Days':
-        const last30Days = new Date();
-        last30Days.setDate(last30Days.getDate() - 29);
-        setSelectedDate(getLast30Days());
-        setStartDate(last30Days);
-        setEndDate(new Date());
+        start = new Date(today.setDate(today.getDate() - 29));
+        start.setHours(0, 0, 0, 0);
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
         break;
       case 'This Month':
-        const today = new Date();
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        setSelectedDate(getThisMonth());
-        setStartDate(startOfMonth);
-        setEndDate(today);
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        start.setHours(0, 0, 0, 0);
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
         break;
       case 'Custom Date':
         setShowDatePicker(true);
-        break;
+        return;
       default:
-        setSelectedDate(getCurrentDate());
-        setStartDate(new Date());
-        setEndDate(new Date());
+        start = new Date(today.setHours(0, 0, 0, 0));
+        end = new Date(today.setHours(23, 59, 59, 999));
     }
+
+    setSelectedDate(`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`);
+    setStartDate(start);
+    setEndDate(end);
   };
 
   const handleDateRangeChange = (dates) => {
@@ -210,43 +190,16 @@ const Transactions = () => {
     // console.log(selectedTags);
   };
 
-//   useEffect(() => {
-//     const filteredTransactions1 = transactions.filter(transaction => {
-//         const transactionDate = new Date(transaction.date);
-//         if (!startDate || !endDate) return true;
-//         const inclusiveEndDate = new Date(endDate);
-//         inclusiveEndDate.setHours(23, 59, 59, 999);
-
-//         const matchesDateRange = transactionDate >= startDate && transactionDate <= inclusiveEndDate;
-//         const matchesAccount = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.from) || selectedAccounts.includes(transaction.to);
-//         const matchesCategory = selectedTags.length === 0 || selectedTags.includes(transaction.tag);
-
-//         console.log('Transaction:', transaction);
-//         console.log('Matches Date Range:', matchesDateRange);
-//         console.log('Matches Account:', matchesAccount);
-//         console.log('Matches Category:', matchesCategory);
-
-//         return matchesDateRange && matchesAccount && matchesCategory;
-//       });
-//     setfilteredTransactions( filteredTransactions1);
-// console.log('useeffect');
-
-//   }, [selectedAccounts, selectedTags, startDate, endDate, transactions]);
-
   const filteredTransactions = transactions.filter(transaction => {
     const transactionDate = new Date(transaction.date);
     if (!startDate || !endDate) return true;
+
     const inclusiveEndDate = new Date(endDate);
     inclusiveEndDate.setHours(23, 59, 59, 999);
-  
+
     const matchesDateRange = transactionDate >= startDate && transactionDate <= inclusiveEndDate;
-    const matchesAccount = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.from) || selectedAccounts.includes(transaction.to);
+    const matchesAccount = selectedAccounts.length === 0 || selectedAccounts.includes(transaction.from) || selectedAccounts.includes(transaction.tag);
     const matchesCategory = selectedTags.length === 0 || selectedTags.includes(transaction.tag);
-  
-    console.log('Transaction:', transaction);
-    console.log('Matches Date Range:', matchesDateRange);
-    console.log('Matches Account:', matchesAccount);
-    console.log('Matches Category:', matchesCategory);
 
     return matchesDateRange && matchesAccount && matchesCategory;
   });
@@ -301,7 +254,7 @@ const Transactions = () => {
         <Table striped bordered hover style={{ margin: 0 }}>
           <tbody>
             <tr>
-              <td colSpan="6" style={{ textAlign: 'right' }}>
+              <td colSpan="7" style={{ textAlign: 'right' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Button variant="primary" onClick={() => handleShow({ message: 'new expense' })} style={{ display: 'flex', alignItems: 'center', marginRight: '10px' }}>
                     <FaPlus style={{ marginRight: '8px' }} /> NEW TRANSACTION
@@ -321,6 +274,9 @@ const Transactions = () => {
                   </Dropdown>
                   <Button variant="secondary" onClick={handleFilterShow} style={{ display: 'flex', alignItems: 'center' }}>
                     <FaFilter style={{ marginRight: '8px' }} /> Filter
+                  </Button>
+                  <Button variant="secondary" onClick={resetFilters} style={{ display: 'flex', alignItems: 'center' }}>
+                    RESET
                   </Button>
                 </div>
               </td>
