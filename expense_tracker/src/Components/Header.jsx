@@ -24,9 +24,9 @@ const styles = {
     color: "white",
     padding: "10px 20px",
     width: "100%",
-    position: "sticky",
+    position: "fixed",
     top: 0,
-    zIndex: 1000,
+    zIndex: 1000, // Ensure header is above other elements
   },
   logo: {
     display: "flex",

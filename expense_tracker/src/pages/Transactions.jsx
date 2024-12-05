@@ -347,15 +347,15 @@ const Transactions = () => {
             ))}
              <tr>
             <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Income:</td>
-            <td style={{ color: 'green', textAlign: 'right',fontWeight: 'bold' }}>+{totalIncome}</td>
+            <td style={{ color: 'green', fontWeight: '500', fontSize: '20px', textAlign: 'right' , fontFamily: 'Roboto Mono, monospace'}}>+{totalIncome}</td>
           </tr>
           <tr>
             <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Self-Transfer:</td>
-            <td style={{ color: 'blue',textAlign: 'right', fontWeight: 'bold' }}>{totalSelfTransfer}</td>
+            <td style={{ color: 'blue',fontWeight: '500', fontSize: '20px', textAlign: 'right' , fontFamily: 'Roboto Mono, monospace'}}>{totalSelfTransfer}</td>
           </tr>
           <tr>
             <td colSpan="6" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Expense:</td>
-            <td style={{ color: 'red', textAlign: 'right',fontWeight: 'bold' }}>-{totalExpense}</td>
+            <td style={{ color: 'red', fontWeight: '500', fontSize: '20px', textAlign: 'right' , fontFamily: 'Roboto Mono, monospace'}}>-{totalExpense}</td>
           </tr>
           </tbody>
         </Table>

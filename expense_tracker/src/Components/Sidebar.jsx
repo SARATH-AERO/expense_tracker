@@ -62,9 +62,15 @@ const styles = {
   sidebar: {
     width: "200px",
     backgroundColor: "#1c1c1c",
-    height: "100%",
+    height: "100vh", // Full viewport height
     padding: "20px",
+    paddingTop: "60px", // Add padding to the top to avoid overlap with the header
     boxShadow: "2px 0 5px rgba(0,0,0,0.5)",
+    position: "fixed", // Fix the sidebar position
+    top: 0, // Align to the top of the viewport
+    left: 0, // Align to the left of the viewport
+    overflowY: "auto", // Add vertical scroll if content overflows
+    zIndex: 1, // Ensure sidebar is below the header
   },
   menu: {
     listStyle: "none",

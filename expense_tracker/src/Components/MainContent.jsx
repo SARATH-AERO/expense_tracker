@@ -37,13 +37,24 @@ return (
 );
 }
 
+// const styles = {
+//   container: {
+//     padding: "20px",
+//     flex: 1, // Take up the remaining space
+//     // color: "white", // White text for contrast
+//     backgroundColor: "#ebe6ff", // Black background
+//     overflowY: "auto", // Enable scrolling if content is too large
+//   },
+// };
+
 const styles = {
   container: {
     padding: "20px",
     flex: 1, // Take up the remaining space
-    // color: "white", // White text for contrast
-    backgroundColor: "#ebe6ff", // Black background
+    backgroundColor: "#ebe6ff", // Light background color
     overflowY: "auto", // Enable scrolling if content is too large
+    marginLeft: "200px", // Add margin to account for the sidebar width
+    marginTop: "50px", // Add margin to account for the fixed header height
   },
 };
 
