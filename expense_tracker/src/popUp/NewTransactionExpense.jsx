@@ -19,6 +19,7 @@ const NewTransactionExpense = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [balance, setBalance] = useState(0);
 
   const toAccounts = accounts.filter(account => account.group !== 'Loan');
 
@@ -31,6 +32,12 @@ const NewTransactionExpense = () => {
     }
   }, [accounts]);
 
+   useEffect(() => {
+    const selectedAccount = accounts.find(acc => acc.name === formData.from);
+    if (selectedAccount) {
+      setBalance(selectedAccount.amount);
+    }
+  }, [formData.from, accounts]);
   
 
   const handleSubmit = (e) => {
@@ -81,7 +88,7 @@ const NewTransactionExpense = () => {
   return (
     <Form onSubmit={handleSubmit}>
       <Form.Group controlId="formFrom">
-        <Form.Label>From</Form.Label>
+        <Form.Label>From Account</Form.Label>
         <select
           className="form-control form-select"
           name="from"
@@ -93,8 +100,23 @@ const NewTransactionExpense = () => {
           ))}
         </select>
       </Form.Group>
+      {/* Balance Amount - read-only */}
+      <Form.Group controlId="formBalance">
+        <Form.Label>Available Balance</Form.Label>
+        <Form.Control
+          type="text"
+          value={balance}
+          readOnly
+          style={{
+            backgroundColor: '#f8f9fa',
+            fontWeight: 'bold',
+            color: balance < 0 ? 'red' : 'green',
+            marginBottom: '10px'
+          }}
+        />
+      </Form.Group>
       <Form.Group controlId="formAmount">
-        <Form.Label>Amount</Form.Label>
+        <Form.Label>Transaction Amount</Form.Label>
         <Form.Control
           type="number"
           name="amount"
@@ -108,7 +130,7 @@ const NewTransactionExpense = () => {
         </Form.Control.Feedback>
       </Form.Group>
       <Form.Group controlId="formTag">
-        <Form.Label>Tags</Form.Label>
+        <Form.Label>Category</Form.Label>
         <select
           className="form-control form-select"
           name="tag"
@@ -130,7 +152,7 @@ const NewTransactionExpense = () => {
         </select>
       </Form.Group>
       <Form.Group controlId="formDate">
-        <Form.Label style={{marginTop:'20px', marginRight:'10px'}}>Date</Form.Label>
+        <Form.Label style={{marginTop:'20px', marginRight:'10px'}}>Transaction Date</Form.Label>
         <DatePicker selected={formData.date} onChange={handleDateChange}  />
       </Form.Group>
       <Form.Group controlId="formNote">

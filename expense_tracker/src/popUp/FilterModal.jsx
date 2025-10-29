@@ -61,7 +61,7 @@ const FilterModal = ({ show,applyFilters ,  handleClose }) => {
             />
           </Form.Group>
           <Form.Group controlId="formTags">
-            <Form.Label>Tags</Form.Label>
+            <Form.Label>Category</Form.Label>
             <Select
               isMulti
               options={tagOptions}

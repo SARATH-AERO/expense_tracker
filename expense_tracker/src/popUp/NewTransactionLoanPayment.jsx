@@ -4,120 +4,180 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 
-const NewTransactionLoanPayment = ({   handleSubmit }) => {
-  const { accounts, setAccounts, addTransaction, transactions } = useContext(AppContext);
+const NewTransactionLoanPayment = ({ handleSubmit }) => {
+  const { accounts, setAccounts, addTransaction } = useContext(AppContext);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
     from: '',
+    to: '',
     amount: '',
     tag: '',
     date: new Date(),
     note: ''
   });
 
+  const [fromBalance, setFromBalance] = useState(0);
+  const [toPending, setToPending] = useState(0);
+
+  // Handle input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    // When user changes From account
+    if (name === 'from') {
+      const selectedFrom = accounts.find(acc => acc.name === value);
+      setFromBalance(selectedFrom ? selectedFrom.amount : 0);
+    }
+
+    // When user changes To account
+    if (name === 'to') {
+      const selectedTo = accounts.find(acc => acc.name === value);
+      setToPending(selectedTo ? selectedTo.amount : 0);
+    }
   };
 
+  // Handle date change
   const handleDateChange = (date) => {
     setFormData({ ...formData, date });
   };
 
+  // Initialize defaults
   useEffect(() => {
     if (accounts.length > 0) {
-      if (!formData.from) {
-        handleInputChange({ target: { name: 'from', value: accounts[0].name } });
+      const defaultFrom = accounts.find(acc => acc.group === 'Cash' || acc.group === 'Bank Account');
+      const defaultTo = accounts.find(acc => acc.group === 'Credit' || acc.group === 'Loan');
+
+      if (defaultFrom && !formData.from) {
+        handleInputChange({ target: { name: 'from', value: defaultFrom.name } });
+        setFromBalance(defaultFrom.amount);
       }
-      if (!formData.to) {
-        handleInputChange({ target: { name: 'to', value: accounts.find(acc => acc.group === 'Credit' || acc.group === 'Loan').name } });
-      }
-      if (!formData.amount) {
-        handleInputChange({ target: { name: 'amount', value: 0 } });
-      }
-      if (!formData.note) {
-        handleInputChange({ target: { name: 'note', value: '' } });
+      if (defaultTo && !formData.to) {
+        handleInputChange({ target: { name: 'to', value: defaultTo.name } });
+        setToPending(defaultTo.amount);
       }
     }
-  }, [accounts, formData.from, formData.to, handleInputChange]);
+  }, [accounts]);
 
-  // useEffect ( () => {
-  //   console.log(accounts);
-  //   console.log(transactions);
-  // }, [accounts, transactions]);
-
+  // Form validation and submission
   const validateAndSubmit = (e) => {
     e.preventDefault();
+    setError('');
     setSuccess('');
 
     const fromAccount = accounts.find(acc => acc.name === formData.from);
     const toAccount = accounts.find(acc => acc.name === formData.to);
     const amount = parseFloat(formData.amount);
 
+    if (!fromAccount || !toAccount) {
+      setError('Invalid account selection');
+      return;
+    }
+
     if (formData.from !== 'Others' && amount > fromAccount.amount) {
-      setError('Not enough amount');
+      setError('Not enough balance in the From account');
       return;
     }
 
     if (amount > toAccount.amount) {
-      setError('Your payment amount exceeds the loan amount');
+      setError('Payment exceeds pending loan amount');
       return;
     }
 
-    if (formData.from !== 'Others') {
-      fromAccount.amount -= amount;
-    }
+    if (formData.from !== 'Others') fromAccount.amount -= amount;
     toAccount.amount -= amount;
 
     setAccounts([...accounts]);
+    setFromBalance(fromAccount.amount);
+    setToPending(toAccount.amount);
+
     addTransaction({
       from: formData.from,
+      to: formData.to,
       amount: formData.amount,
       tag: formData.to,
       date: formData.date,
       note: formData.note,
-      transType : 'Loan Payment'
+      transType: 'Loan Payment'
     });
 
-    setError('');
     setSuccess('Loan payment successful');
+    setFormData({ ...formData, amount: '', note: '' });
   };
 
-  const fromAccounts = accounts.filter(account => account.group === 'Cash' || account.group === 'Bank Account');
-  const toAccounts = accounts.filter(account => account.group === 'Credit' || account.group === 'Loan');
+  const fromAccounts = accounts.filter(acc => acc.group === 'Cash' || acc.group === 'Bank Account');
+  const toAccounts = accounts.filter(acc => acc.group === 'Credit' || acc.group === 'Loan');
+
+  const fromColor = fromBalance > 0 ? 'green' : fromBalance < 0 ? 'red' : 'gray';
+  const toColor = toPending > 0 ? 'red' : 'gray';
 
   return (
     <Form onSubmit={validateAndSubmit}>
+      {/* 🔹 From Account */}
       <Form.Group controlId="formFrom">
-        <Form.Label>From</Form.Label>
+        <Form.Label>From Account</Form.Label>
         <select
           className="form-control form-select"
           name="from"
           value={formData.from}
           onChange={handleInputChange}
         >
-          {fromAccounts.map((account) => (
-            <option key={account.name} value={account.name}>{account.name}</option>
+          {fromAccounts.map((acc) => (
+            <option key={acc.name} value={acc.name}>{acc.name}</option>
           ))}
           <option value="Others">Others</option>
         </select>
+
+        {/* Available balance */}
+        <Form.Group controlId="formFromBalance" className="mt-2">
+          <Form.Label>Available Balance</Form.Label>
+          <Form.Control
+            type="text"
+            value={fromBalance.toLocaleString()}
+            readOnly
+            style={{
+              backgroundColor: '#f8f9fa',
+              color: fromColor,
+              fontWeight: 'bold'
+            }}
+          />
+        </Form.Group>
       </Form.Group>
-      <Form.Group controlId="formTo">
-        <Form.Label>To</Form.Label>
+
+      {/* 🔹 To Account */}
+      <Form.Group controlId="formTo" className="mt-3">
+        <Form.Label>Loan / Credit Account</Form.Label>
         <select
           className="form-control form-select"
           name="to"
           value={formData.to}
           onChange={handleInputChange}
         >
-          {toAccounts.map((account) => (
-            <option key={account.name} value={account.name}>{account.name}</option>
+          {toAccounts.map((acc) => (
+            <option key={acc.name} value={acc.name}>{acc.name}</option>
           ))}
         </select>
+
+        {/* Pending loan amount */}
+        <Form.Group controlId="formToPending" className="mt-2">
+          <Form.Label>Pending Loan Amount</Form.Label>
+          <Form.Control
+            type="text"
+            value={toPending.toLocaleString()}
+            readOnly
+            style={{
+              backgroundColor: '#f8f9fa',
+              color: toColor,
+              fontWeight: 'bold'
+            }}
+          />
+        </Form.Group>
       </Form.Group>
-      <Form.Group controlId="formAmount">
-        <Form.Label>Amount</Form.Label>
+
+      {/* 🔹 Amount */}
+      <Form.Group controlId="formAmount" className="mt-3">
+        <Form.Label>Payment Amount</Form.Label>
         <Form.Control
           type="number"
           name="amount"
@@ -126,11 +186,11 @@ const NewTransactionLoanPayment = ({   handleSubmit }) => {
           isInvalid={!!error}
           required
         />
-        <Form.Control.Feedback type="invalid">
-          {error}
-        </Form.Control.Feedback>
+        <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
       </Form.Group>
-      <Form.Group controlId="formNote">
+
+      {/* 🔹 Note */}
+      <Form.Group controlId="formNote" className="mt-3">
         <Form.Label>Note</Form.Label>
         <Form.Control
           type="text"
@@ -139,15 +199,20 @@ const NewTransactionLoanPayment = ({   handleSubmit }) => {
           onChange={handleInputChange}
         />
       </Form.Group>
-      <Form.Group controlId="formDate">
-        <Form.Label   style={{marginTop:'20px', marginRight:'10px'}} >Date</Form.Label>
+
+      {/* 🔹 Date */}
+      <Form.Group controlId="formDate" className="mt-3">
+        <Form.Label style={{ marginRight: '10px' }}>Transaction Date</Form.Label>
         <DatePicker selected={formData.date} onChange={handleDateChange} />
       </Form.Group>
-      <div className="d-flex justify-content-center mt-3">
+
+      {/* 🔹 Submit */}
+      <div className="d-flex justify-content-center mt-4">
         <Button variant="primary" type="submit">
           Pay Loan
         </Button>
       </div>
+
       {success && <div className="text-success mt-3">{success}</div>}
     </Form>
   );

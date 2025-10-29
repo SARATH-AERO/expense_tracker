@@ -5,20 +5,28 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 
 const NewTransactionIncome = ({ handleSubmit }) => {
-  const { accounts, setAccounts, addTransaction, transactions } = useContext(AppContext);
+  const { accounts, setAccounts, addTransaction } = useContext(AppContext);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
     from: '',
+    to: '',
     amount: '',
     tag: '',
     date: new Date(),
     note: ''
   });
 
+  const [selectedBalance, setSelectedBalance] = useState(0);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    if (name === 'to') {
+      const selectedAccount = accounts.find(acc => acc.name === value);
+      setSelectedBalance(selectedAccount ? selectedAccount.amount : 0);
+    }
   };
 
   const handleDateChange = (date) => {
@@ -31,19 +39,17 @@ const NewTransactionIncome = ({ handleSubmit }) => {
         handleInputChange({ target: { name: 'from', value: 'Salary' } });
       }
       if (!formData.to) {
-        handleInputChange({ target: { name: 'to', value: accounts[0].name } });
+        const defaultAccount = accounts[0];
+        handleInputChange({ target: { name: 'to', value: defaultAccount.name } });
+        setSelectedBalance(defaultAccount.amount);
       }
     }
-  }, [accounts, formData.from, formData.to]);
-
-//     useEffect ( () => {
-//     console.log(accounts);
-//     console.log(transactions);
-//   }, [accounts, transactions]);
+  }, [accounts]);
 
   const validateAndSubmit = (e) => {
     e.preventDefault();
     setSuccess('');
+    setError('');
 
     const toAccount = accounts.find(acc => acc.name === formData.to);
     const amount = parseFloat(formData.amount);
@@ -54,22 +60,28 @@ const NewTransactionIncome = ({ handleSubmit }) => {
     }
 
     toAccount.amount += amount;
-
     setAccounts([...accounts]);
+    setSelectedBalance(toAccount.amount);
+
     addTransaction({
       from: formData.from,
+      to: formData.to,
       amount: formData.amount,
       tag: formData.to,
       date: formData.date,
       note: formData.note,
-      transType : 'Income'
+      transType: 'Income'
     });
 
-    setError('');
     setSuccess('Income added successfully');
+    setFormData({ ...formData, amount: '', note: '' });
   };
 
   const toAccounts = accounts.filter(account => account.group === 'Cash' || account.group === 'Bank Account');
+
+  // 🔹 Dynamic balance color logic
+  const balanceColor =
+    selectedBalance > 0 ? 'green' : selectedBalance < 0 ? 'red' : 'gray';
 
   return (
     <Form onSubmit={validateAndSubmit}>
@@ -87,8 +99,9 @@ const NewTransactionIncome = ({ handleSubmit }) => {
           <option value="Cash">Cash</option>
         </select>
       </Form.Group>
-      <Form.Group controlId="formTo">
-        <Form.Label>To</Form.Label>
+
+      <Form.Group controlId="formTo" className="mt-3">
+        <Form.Label>To Account</Form.Label>
         <select
           className="form-control form-select"
           name="to"
@@ -99,9 +112,25 @@ const NewTransactionIncome = ({ handleSubmit }) => {
             <option key={account.name} value={account.name}>{account.name}</option>
           ))}
         </select>
+
+        {/* 🔹 Non-editable text box for balance */}
+        <Form.Group controlId="formBalance" className="mt-2">
+          <Form.Label>Available Balance</Form.Label>
+          <Form.Control
+            type="text"
+            value={selectedBalance.toLocaleString()}
+            readOnly
+            style={{
+              color: balanceColor,
+              fontWeight: 'bold',
+              backgroundColor: '#f8f9fa'
+            }}
+          />
+        </Form.Group>
       </Form.Group>
-      <Form.Group controlId="formAmount">
-        <Form.Label>Amount</Form.Label>
+
+      <Form.Group controlId="formAmount" className="mt-3">
+        <Form.Label>Transaction Amount</Form.Label>
         <Form.Control
           type="number"
           name="amount"
@@ -114,7 +143,8 @@ const NewTransactionIncome = ({ handleSubmit }) => {
           {error}
         </Form.Control.Feedback>
       </Form.Group>
-      <Form.Group controlId="formNote">
+
+      <Form.Group controlId="formNote" className="mt-3">
         <Form.Label>Note</Form.Label>
         <Form.Control
           type="text"
@@ -123,15 +153,18 @@ const NewTransactionIncome = ({ handleSubmit }) => {
           onChange={handleInputChange}
         />
       </Form.Group>
-      <Form.Group controlId="formDate">
-        <Form.Label style={{marginTop:'20px', marginRight:'10px'}}  >Date</Form.Label>
+
+      <Form.Group controlId="formDate" className="mt-3">
+        <Form.Label style={{ marginRight: '10px' }}>Transaction Date</Form.Label>
         <DatePicker selected={formData.date} onChange={handleDateChange} />
       </Form.Group>
-      <div className="d-flex justify-content-center mt-3">
+
+      <div className="d-flex justify-content-center mt-4">
         <Button variant="primary" type="submit">
           Add Income
         </Button>
       </div>
+
       {success && <div className="text-success mt-3">{success}</div>}
     </Form>
   );
