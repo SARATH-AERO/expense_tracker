@@ -149,6 +149,7 @@ const NewTransactionExpense = () => {
           <option value="Utilities">Utilities</option>
           <option value="Entertainment">Entertainment</option>
           <option value="Hospital">Hospital</option>
+          <option value="Others">Others</option>
         </select>
       </Form.Group>
       <Form.Group controlId="formDate">

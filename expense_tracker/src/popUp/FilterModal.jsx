@@ -31,6 +31,8 @@ const FilterModal = ({ show,applyFilters ,  handleClose }) => {
     { value: 'Utilities', label: 'Utilities' },
     { value: 'Entertainment', label: 'Entertainment' },
     { value: 'Hospital', label: 'Hospital' },
+    { value: 'Others', label: 'Others' },
+
     // Add more tags as needed
   ];
 
