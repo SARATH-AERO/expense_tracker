@@ -5,7 +5,7 @@ import { AppContext } from '../context/AppContext';
 
 
 const AddAccountPopUP = ({ show, onClose }) => {
-  const { accounts, addAccount } = useContext(AppContext);
+  const { accounts, addAccount, currentUser } = useContext(AppContext);
   const [name, setName] = useState('');
   const [amount, setamount] = useState('');
   const [group, setGroup] = useState('Cash');
@@ -21,9 +21,27 @@ const AddAccountPopUP = ({ show, onClose }) => {
       return;
     }
 
-    addAccount({ name, amount, group });
+   // Add account with user ID
+    addAccount({ 
+      name, 
+      amount: parseFloat(amount), 
+      group,
+      userId: currentUser.id,
+      createdAt: new Date().toISOString()
+    });
+
     setShowSuccess(true);
     setError('');
+
+    // Reset form after success
+    setName('');
+    setamount('');
+    setGroup('Cash');
+
+    // Auto close after success
+    setTimeout(() => {
+      handleCloseSuccess();
+    }, 1500);
   };
 
   const handleCloseSuccess = () => {

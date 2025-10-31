@@ -1,79 +1,142 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState, useMemo } from 'react';
 
 // Create Context
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [currentView, setCurrentView] = useState('Dashboard');
-  const [accounts, setAccounts] = useState([]);
-  const [transactions, setTransactions] = useState([]);
+  // users: array of user objects { id, name, email, password, accounts: [], transactions: [] }
+  const [users, setUsers] = useState(() => {
+    try {
+      const raw = localStorage.getItem('expense_users');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
 
+  const [currentUserId, setCurrentUserId] = useState(() => {
+    try {
+      return localStorage.getItem('expense_currentUserId') || null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Persist users and currentUserId
+  useEffect(() => {
+    localStorage.setItem('expense_users', JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+    if (currentUserId) localStorage.setItem('expense_currentUserId', currentUserId);
+    else localStorage.removeItem('expense_currentUserId');
+  }, [currentUserId]);
+
+  const currentUser = useMemo(() => {
+    return users.find(u => u.id === currentUserId) || null;
+  }, [users, currentUserId]);
+
+  // UI view state (used by Sidebar/MainContent)
+  const [currentView, setCurrentView] = useState('Dashboard');
+
+  const accounts = currentUser ? (currentUser.accounts || []) : [];
+  const transactions = currentUser ? (currentUser.transactions || []) : [];
+
+  // Auth methods
+  const register = async ({ name, email, password }) => {
+    if (users.find(u => u.email === email)) {
+      throw new Error('Email already registered');
+    }
+    const id = `u_${Date.now()}`;
+    const newUser = { id, name, email, password, accounts: [], transactions: [] };
+    setUsers(prev => [...prev, newUser]);
+    setCurrentUserId(id);
+    return newUser;
+  };
+
+  const login = async (email, password) => {
+    const user = users.find(u => u.email === email && u.password === password);
+    if (!user) throw new Error('Invalid credentials');
+    setCurrentUserId(user.id);
+    return user;
+  };
+
+  const logout = () => {
+    setCurrentUserId(null);
+  };
+
+  // Account helpers
+  const setAccounts = (newAccounts) => {
+    setUsers(prev => prev.map(u => u.id === currentUserId ? { ...u, accounts: newAccounts } : u));
+  };
 
   const addAccount = (account) => {
-    setAccounts([...accounts, account]);
+    const acct = { ...account, id: `a_${Date.now()}` };
+    setUsers(prev => prev.map(u => u.id === currentUserId ? { ...u, accounts: [...(u.accounts||[]), acct] } : u));
+    return acct;
   };
 
-  const editAccount = (updatedAccount) => {
-    setAccounts(accounts.map(account => account.name === updatedAccount.name ? updatedAccount : account));
-  };
-  const deleteAccount = (accountName) => {
-    setAccounts(accounts.filter(account => account.name !== accountName));
-  };
-
-
-  const addTransaction = (transaction, type) => {
-    setAccounts((prevAccounts) => {
-      return prevAccounts.map((account) => {
-        if (account.name === transaction.from) {
-          let newBalance = account.balance;
-          if (account.group === 'cash' || account.group === 'bank') {
-            newBalance -= parseFloat(transaction.amount);
-          } else if (account.group === 'credit') {
-            newBalance += parseFloat(transaction.amount);
-          }
-          return { ...account, balance: newBalance };
-        }
-        return account;
-      });
-    });
-
-    setTransactions((prevTransactions) => [
-      ...prevTransactions,
-      { ...transaction, type }
-    ]);
+  const editAccount = (updated) => {
+    setUsers(prev => prev.map(u => {
+      if (u.id !== currentUserId) return u;
+      return { ...u, accounts: (u.accounts||[]).map(a => a.id === updated.id ? { ...a, ...updated } : a) };
+    }));
   };
 
+  const deleteAccount = (accountId) => {
+    setUsers(prev => prev.map(u => u.id === currentUserId ? { ...u, accounts: (u.accounts||[]).filter(a => a.id !== accountId) } : u));
+  };
 
+  // Transaction helpers
+  const setTransactions = (newTransactions) => {
+    setUsers(prev => prev.map(u => u.id === currentUserId ? { ...u, transactions: newTransactions } : u));
+  };
 
-  // initial values
-  useEffect (() => {
-  setAccounts([...accounts, 
-    { name:'Sarath Wallet', amount:114000, group:'Cash'},
-    { name:'Rashmika Wallet', amount:10000, group:'Cash'},
-    { name:'Chirji SBI savings', amount:60000, group:'Bank Account'},
-    { name:'Sarath HDFC savings', amount:135000, group:'Bank Account'},
-    { name:'HDFC Master Credit', amount:130000, group:'Credit'},
-    { name:'SBI Reliance Credit', amount:70000, group:'Credit'},
-    { name:'Bike Loan', amount:150000, group:'Loan'},
-    { name:'Car Loan', amount:550400, group:'Loan'}
-  ])  
+  const addTransaction = (transaction) => {
+    const tx = { ...transaction, id: `t_${Date.now()}`, createdAt: new Date().toISOString() };
+    setUsers(prev => prev.map(u => u.id === currentUserId ? { ...u, transactions: [...(u.transactions||[]), tx] } : u));
+    return tx;
+  };
 
-  setTransactions([ ...transactions,
-    {from : 'Salary', amount:95000, tag :'Sarath HDFC savings', date:new Date(), note: 'HCL salary', transType : 'Income'},
-    {from : 'Sarath Wallet', amount:500, tag :'Rashmika Wallet', date:new Date(), note: 'self transfer', transType : 'Self-Transfer'},
-    {from : 'Sarath Wallet', amount:500, tag :'Chirji SBI savings', date:new Date(), note: 'self transfer GPay', transType : 'Self-Transfer'},
-    {from : 'Sarath HDFC savings', amount:1000, tag :'Bike Loan', date:new Date(), note: 'Loan Payment', transType : 'Loan Payment'},
-    {from : 'HDFC Master Credit', amount:9500, tag :'Rent', date:new Date(), note: 'PG - Rent', transType : 'Expense'},
-    {from : 'HDFC Master Credit', amount:5500, tag :'Clothes', date:new Date(), note: 'Arrow - Forum Mall', transType : 'Expense'},
-    {from : 'HDFC Master Credit', amount:4500, tag :'Restaurant', date:new Date(), note: 'Barbeque', transType : 'Expense'},
-    {from : 'HDFC Master Credit', amount:2500, tag :'Shopping', date:new Date(), note: 'Iron Box', transType : 'Expense'}
-  ])
-},[]);
+  const editTransaction = (updated) => {
+    setUsers(prev => prev.map(u => {
+      if (u.id !== currentUserId) return u;
+      return { ...u, transactions: (u.transactions||[]).map(t => t.id === updated.id ? { ...t, ...updated } : t) };
+    }));
+  };
+
+  const deleteTransaction = (txId) => {
+    setUsers(prev => prev.map(u => u.id === currentUserId ? { ...u, transactions: (u.transactions||[]).filter(t => t.id !== txId) } : u));
+  };
+
+  const clearCurrentUserData = () => {
+    setUsers(prev => prev.map(u => u.id === currentUserId ? { ...u, accounts: [], transactions: [] } : u));
+  };
 
   return (
-    <AppContext.Provider value={{ currentView, setCurrentView, accounts,
-     addAccount, setAccounts, editAccount, deleteAccount,transactions, addTransaction,
-     setTransactions }}>
+    <AppContext.Provider value={{
+      currentView,
+      setCurrentView,
+      users,
+      currentUser,
+      currentUserId,
+      accounts,
+      transactions,
+      register,
+      login,
+      logout,
+      setAccounts,
+      addAccount,
+      editAccount,
+      deleteAccount,
+      setTransactions,
+      addTransaction,
+      editTransaction,
+      deleteTransaction,
+      clearCurrentUserData,
+      setUsers,
+      setCurrentUserId
+    }}>
       {children}
     </AppContext.Provider>
   );

@@ -5,7 +5,11 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 
 const NewTransactionLoanPayment = ({ handleSubmit }) => {
-  const { accounts, setAccounts, addTransaction } = useContext(AppContext);
+  const { accounts, setAccounts, addTransaction, currentUser } = useContext(AppContext);
+  
+  // Filter accounts by current user
+  const userAccounts = accounts.filter(acc => acc.userId === currentUser?.id) || [];
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
@@ -14,7 +18,8 @@ const NewTransactionLoanPayment = ({ handleSubmit }) => {
     amount: '',
     tag: '',
     date: new Date(),
-    note: ''
+    note: '',
+    userId: currentUser?.id
   });
 
   const [fromBalance, setFromBalance] = useState(0);
@@ -23,31 +28,33 @@ const NewTransactionLoanPayment = ({ handleSubmit }) => {
   // Handle input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData(prev => ({ ...prev, [name]: value }));
 
-    // When user changes From account
     if (name === 'from') {
-      const selectedFrom = accounts.find(acc => acc.name === value);
+      const selectedFrom = userAccounts.find(acc => acc.name === value);
       setFromBalance(selectedFrom ? selectedFrom.amount : 0);
     }
 
-    // When user changes To account
     if (name === 'to') {
-      const selectedTo = accounts.find(acc => acc.name === value);
+      const selectedTo = userAccounts.find(acc => acc.name === value);
       setToPending(selectedTo ? selectedTo.amount : 0);
     }
   };
 
   // Handle date change
   const handleDateChange = (date) => {
-    setFormData({ ...formData, date });
+    setFormData(prev => ({ ...prev, date }));
   };
 
-  // Initialize defaults
+  // Initialize defaults with user's accounts
   useEffect(() => {
-    if (accounts.length > 0) {
-      const defaultFrom = accounts.find(acc => acc.group === 'Cash' || acc.group === 'Bank Account');
-      const defaultTo = accounts.find(acc => acc.group === 'Credit' || acc.group === 'Loan');
+    if (userAccounts.length > 0) {
+      const defaultFrom = userAccounts.find(acc => 
+        acc.group === 'Cash' || acc.group === 'Bank Account'
+      );
+      const defaultTo = userAccounts.find(acc => 
+        acc.group === 'Credit' || acc.group === 'Loan'
+      );
 
       if (defaultFrom && !formData.from) {
         handleInputChange({ target: { name: 'from', value: defaultFrom.name } });
@@ -58,7 +65,7 @@ const NewTransactionLoanPayment = ({ handleSubmit }) => {
         setToPending(defaultTo.amount);
       }
     }
-  }, [accounts]);
+  }, [userAccounts, currentUser]);
 
   // Form validation and submission
   const validateAndSubmit = (e) => {
@@ -66,8 +73,8 @@ const NewTransactionLoanPayment = ({ handleSubmit }) => {
     setError('');
     setSuccess('');
 
-    const fromAccount = accounts.find(acc => acc.name === formData.from);
-    const toAccount = accounts.find(acc => acc.name === formData.to);
+    const fromAccount = userAccounts.find(acc => acc.name === formData.from);
+    const toAccount = userAccounts.find(acc => acc.name === formData.to);
     const amount = parseFloat(formData.amount);
 
     if (!fromAccount || !toAccount) {
@@ -85,27 +92,36 @@ const NewTransactionLoanPayment = ({ handleSubmit }) => {
       return;
     }
 
-    if (formData.from !== 'Others') fromAccount.amount -= amount;
-    toAccount.amount -= amount;
+    // Update account balances
+    const updatedAccounts = accounts.map(acc => {
+      if (acc.id === fromAccount.id && formData.from !== 'Others') {
+        return { ...acc, amount: acc.amount - amount };
+      }
+      if (acc.id === toAccount.id) {
+        return { ...acc, amount: acc.amount - amount };
+      }
+      return acc;
+    });
 
-    setAccounts([...accounts]);
-    setFromBalance(fromAccount.amount);
-    setToPending(toAccount.amount);
+    setAccounts(updatedAccounts);
+    setFromBalance(fromAccount.amount - (formData.from !== 'Others' ? amount : 0));
+    setToPending(toAccount.amount - amount);
 
+    // Add transaction with user context
     addTransaction({
-      from: formData.from,
-      to: formData.to,
-      amount: formData.amount,
-      tag: formData.to,
-      date: formData.date,
-      note: formData.note,
-      transType: 'Loan Payment'
+      ...formData,
+      amount: amount,
+      userId: currentUser?.id,
+      fromAccountId: fromAccount.id,
+      toAccountId: toAccount.id,
+      tag: toAccount.name,
+      transType: 'Loan Payment',
+      createdAt: new Date().toISOString()
     });
 
     setSuccess('Loan payment successful');
-    setFormData({ ...formData, amount: '', note: '' });
+    setFormData(prev => ({ ...prev, amount: '', note: '' }));
   };
-
   const fromAccounts = accounts.filter(acc => acc.group === 'Cash' || acc.group === 'Bank Account');
   const toAccounts = accounts.filter(acc => acc.group === 'Credit' || acc.group === 'Loan');
 

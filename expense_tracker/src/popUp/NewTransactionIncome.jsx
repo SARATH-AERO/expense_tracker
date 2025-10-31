@@ -5,19 +5,29 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 
 const NewTransactionIncome = ({ handleSubmit }) => {
-  const { accounts, setAccounts, addTransaction } = useContext(AppContext);
+  const { accounts, setAccounts, addTransaction, currentUser } = useContext(AppContext);
+  
+  // Filter accounts by current user
+  const userAccounts = accounts.filter(acc => acc.userId === currentUser?.id) || [];
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
-    from: '',
-    to: '',
+    from: 'Salary',
+    to: userAccounts.length > 0 ? userAccounts[0].name : '',
     amount: '',
     tag: '',
     date: new Date(),
-    note: ''
+    note: '',
+    userId: currentUser?.id
   });
 
   const [selectedBalance, setSelectedBalance] = useState(0);
+
+  // Filter only Cash and Bank accounts for income deposits
+  const toAccounts = userAccounts.filter(account => 
+    account.group === 'Cash' || account.group === 'Bank Account'
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -33,25 +43,25 @@ const NewTransactionIncome = ({ handleSubmit }) => {
     setFormData({ ...formData, date });
   };
 
+   // Initialize form with user's accounts
   useEffect(() => {
-    if (accounts.length > 0) {
-      if (!formData.from) {
-        handleInputChange({ target: { name: 'from', value: 'Salary' } });
-      }
-      if (!formData.to) {
-        const defaultAccount = accounts[0];
-        handleInputChange({ target: { name: 'to', value: defaultAccount.name } });
-        setSelectedBalance(defaultAccount.amount);
-      }
+    if (userAccounts.length > 0 && !formData.to) {
+      const defaultAccount = userAccounts[0];
+      setFormData(prev => ({
+        ...prev,
+        to: defaultAccount.name,
+        userId: currentUser?.id
+      }));
+      setSelectedBalance(defaultAccount.amount);
     }
-  }, [accounts]);
+  }, [userAccounts, currentUser]);
 
   const validateAndSubmit = (e) => {
     e.preventDefault();
     setSuccess('');
     setError('');
 
-    const toAccount = accounts.find(acc => acc.name === formData.to);
+    const toAccount = userAccounts.find(acc => acc.name === formData.to);
     const amount = parseFloat(formData.amount);
 
     if (!toAccount) {
@@ -59,25 +69,41 @@ const NewTransactionIncome = ({ handleSubmit }) => {
       return;
     }
 
-    toAccount.amount += amount;
-    setAccounts([...accounts]);
-    setSelectedBalance(toAccount.amount);
+    if (!amount || amount <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
 
+    // Update account balance
+    const updatedAccounts = accounts.map(acc => {
+      if (acc.id === toAccount.id) {
+        return { ...acc, amount: acc.amount + amount };
+      }
+      return acc;
+    });
+    setAccounts(updatedAccounts);
+    setSelectedBalance(toAccount.amount + amount);
+
+    // Add transaction with user context
     addTransaction({
-      from: formData.from,
-      to: formData.to,
-      amount: formData.amount,
-      tag: formData.to,
-      date: formData.date,
-      note: formData.note,
-      transType: 'Income'
+      ...formData,
+      amount: amount,
+      userId: currentUser?.id,
+      accountId: toAccount.id,
+      transType: 'Income',
+      createdAt: new Date().toISOString()
     });
 
     setSuccess('Income added successfully');
-    setFormData({ ...formData, amount: '', note: '' });
+    
+    // Reset only amount and note, keep other selections
+    setFormData(prev => ({
+      ...prev,
+      amount: '',
+      note: ''
+    }));
   };
 
-  const toAccounts = accounts.filter(account => account.group === 'Cash' || account.group === 'Bank Account');
 
   // 🔹 Dynamic balance color logic
   const balanceColor =

@@ -4,11 +4,12 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { AppContext } from '../context/AppContext';
 
 const EditAccountPopUP = ({ show, onClose, account }) => {
-    const { editAccount, deleteAccount } = useContext(AppContext);
+     const { editAccount, deleteAccount, currentUser, accounts } = useContext(AppContext);
     const [name, setName] = useState('');
     const [amount, setamount] = useState('');
     const [group, setGroup] = useState('Cash');
     const [showSuccess, setShowSuccess] = useState('');
+    const [error, setError] = useState('');
 
     useEffect(() => {
         if (account) {
@@ -22,13 +23,50 @@ const EditAccountPopUP = ({ show, onClose, account }) => {
         e.preventDefault();
         editAccount({ ...account, name, amount, group });
         setShowSuccess('update');
+        // Check if account belongs to current user
+        if (account.userId !== currentUser.id) {
+            setError('You can only edit your own accounts');
+            return;
+        }
+
+        // Check if new name conflicts with existing account (excluding current account)
+        const nameExists = accounts.some(acc => 
+            acc.name.toLowerCase() === name.toLowerCase() && 
+            acc.userId === currentUser.id && 
+            acc.id !== account.id
+        );
+
+        if (nameExists) {
+            setError('Account name already exists');
+            return;
+        }
+
+        // Update account with user context
+        editAccount({
+            ...account,
+            name,
+            amount,
+            group,
+            userId: currentUser.id,
+            updatedAt: new Date().toISOString()
+        });
+
+        setShowSuccess('update');
+        setTimeout(() => handleCloseSuccess(), 1500);
     };
 
     const handleDelete = () => {
-        deleteAccount(account.name);
+        // Check if account belongs to current user
+        if (account.userId !== currentUser.id) {
+            setError('You can only delete your own accounts');
+            return;
+        }
+
+        deleteAccount(account.id); // Use account ID instead of name for deletion
         setShowSuccess('delete');
-        // onClose();
-      };
+        setTimeout(() => handleCloseSuccess(), 1500);
+    };
+
 
     const handleCloseSuccess = () => {
         setShowSuccess(false);
@@ -126,6 +164,11 @@ const EditAccountPopUP = ({ show, onClose, account }) => {
                 <div className="popup-content">
                     <h2 className="mb-4">Edit Account</h2>
                     <hr />
+                    {error && (
+                        <div className="alert alert-danger" role="alert">
+                            {error}
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label htmlFor="name" className="required">Name:</label>

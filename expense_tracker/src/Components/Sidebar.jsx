@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { AppContext } from "../context/AppContext";
-import { Link } from "react-router-dom"; 
+import { NavLink, useLocation } from "react-router-dom";
 import {
   FaTachometerAlt,
   FaExchangeAlt,
@@ -12,7 +12,12 @@ import {
 
 const Sidebar = () => {
   const { setCurrentView } = useContext(AppContext);
-  const [selectedSection, setSelectedSection] = useState("Dashboard");
+  const location = useLocation();
+  const [selectedSection, setSelectedSection] = useState(() => {
+    // initialize from current path
+    const path = location.pathname.replace('/', '') || 'dashboard';
+    return path.charAt(0).toUpperCase() + path.slice(1);
+  });
 
   const menuItems = [
     { name: "Dashboard", icon: <FaTachometerAlt /> },
@@ -23,34 +28,43 @@ const Sidebar = () => {
     { name: "Settings", icon: <FaCog /> },
   ];
 
+  const pathMap = {
+    Dashboard: '/dashboard',
+    Transactions: '/transactions',
+    Accounts: '/accounts',
+    Reports: '/reports',
+    Budget: '/budget',
+    Settings: '/settings'
+  };
+
   const handleSectionClick = (section) => {
-    setSelectedSection(section); // Update selected section
-    setCurrentView(section); // Update current view in context
+    setSelectedSection(section); // keep local highlight for instant feedback
+    setCurrentView && setCurrentView(section); // Update current view in context (if available)
+    // navigation will be handled by NavLink click
   };
 
   return (
     <nav style={styles.sidebar}>
       <ul style={styles.menu}>
         {menuItems.map((item) => (
-          <li
-            key={item.name}
-            onClick={() => handleSectionClick(item.name)}
-            style={{
-              ...styles.menuItem,
-              backgroundColor:
-                selectedSection === item.name ? "#2F3E8A" : "transparent", // Highlight selected item
-              color: selectedSection === item.name ? "white" : "white", // Change text color
-            }}
-          >
-            <span
-              style={{
-                ...styles.icon,
-                color: selectedSection === item.name ? "white" : "white", // Change icon color
-              }}
+          <li key={item.name} style={styles.menuItem}>
+            <NavLink
+              to={pathMap[item.name] || '/'}
+              onClick={() => handleSectionClick(item.name)}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                padding: '10px 15px',
+                borderRadius: '4px',
+                textDecoration: 'none',
+                color: isActive ? 'white' : 'white',
+                backgroundColor: isActive ? '#2F3E8A' : 'transparent'
+              })}
             >
-              {item.icon}
-            </span>
-            {item.name}
+              <span style={{ ...styles.icon }}>{item.icon}</span>
+              {item.name}
+            </NavLink>
           </li>
         ))}
       </ul>

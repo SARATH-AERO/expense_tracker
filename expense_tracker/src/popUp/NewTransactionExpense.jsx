@@ -9,65 +9,93 @@ import { useContext, useState, useEffect } from 'react';
 import { type } from '@testing-library/user-event/dist/type';
 
 const NewTransactionExpense = () => {
-  const { transactions, addTransaction, accounts, setAccounts } = useContext(AppContext);
+  const { transactions, addTransaction, accounts, setAccounts, currentUser } = useContext(AppContext);
+  
+  // Filter accounts by current user
+  const userAccounts = accounts.filter(acc => acc.userId === currentUser?.id) || [];
+  
   const [formData, setFormData] = useState({
-    from: accounts.length > 0 ? accounts[0].name : '',
+    from: userAccounts.length > 0 ? userAccounts[0].name : '',
     amount: '',
     tag: 'Groceries',
     date: new Date(),
-    note: ''
+    note: '',
+    userId: currentUser?.id // Add userId to transaction
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [balance, setBalance] = useState(0);
 
-  const toAccounts = accounts.filter(account => account.group !== 'Loan');
+  // Filter loan accounts out for expense transactions
+  const toAccounts = userAccounts.filter(account => account.group !== 'Loan');
 
+
+  // Update form when accounts change or user changes
   useEffect(() => {
-    if (accounts.length > 0 && formData.from === '') {
+    if (userAccounts.length > 0 && formData.from === '') {
       setFormData(prevState => ({
         ...prevState,
-        from: accounts[0].name
+        from: userAccounts[0].name,
+        userId: currentUser?.id
       }));
     }
-  }, [accounts]);
+  }, [userAccounts, currentUser]);
 
-   useEffect(() => {
-    const selectedAccount = accounts.find(acc => acc.name === formData.from);
+  // Update balance when account changes
+  useEffect(() => {
+    const selectedAccount = userAccounts.find(acc => acc.name === formData.from);
     if (selectedAccount) {
       setBalance(selectedAccount.amount);
     }
-  }, [formData.from, accounts]);
-  
+  }, [formData.from, userAccounts]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setSuccess('');
-    const account = accounts.find(acc => acc.name === formData.from);
+    
+    const account = userAccounts.find(acc => acc.name === formData.from);
+    if (!account) {
+      setError('Account not found');
+      return;
+    }
+
     const amount = parseFloat(formData.amount);
 
+    // Validate amount based on account type
     if (account.group === 'Cash' || account.group === 'Bank Account') {
       if (amount > account.amount) {
-        setError('Not enough amount');
+        setError('Not enough balance');
         return;
-      } else {
-        account.amount -= amount;
       }
+      account.amount -= amount;
     } else if (account.group === 'Credit') {
       account.amount += amount;
     }
 
-    setAccounts([...accounts]);
+    // Update accounts
+    setAccounts(accounts.map(acc => 
+      acc.id === account.id ? account : acc
+    ));
+
+    // Add transaction with user context
     addTransaction({
-      from: formData.from,
-      amount: formData.amount,
-      tag: formData.tag,
-      date: formData.date,
-      note: formData.note,
-      transType : 'Expense'
+      ...formData,
+      amount: amount,
+      userId: currentUser?.id,
+      accountId: account.id,
+      transType: 'Expense',
+      createdAt: new Date().toISOString()
     });
+
     setError('');
-    setSuccess('Expense amount spent successful');
+    setSuccess('Expense recorded successfully');
+
+    // Optional: Reset form after success
+    setFormData(prev => ({
+      ...prev,
+      amount: '',
+      note: ''
+    }));
   };
 
   const handleInputChange = (e) => {

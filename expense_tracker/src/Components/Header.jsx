@@ -1,19 +1,64 @@
 import React, { useContext } from "react";
 import { AppContext } from "../context/AppContext";
 import { BiDollarCircle } from "react-icons/bi";
+import { Button } from 'react-bootstrap';
 
 const Header = () => {
-  const { currentView } = useContext(AppContext);
+  // const { currentView } = useContext(AppContext);
+const { currentView, currentUser, logout } = useContext(AppContext);
+  
+return (
+  <header style={styles.header}  >
+    <div style={styles.logoWrapper}>
+      <BiDollarCircle style={styles.dollarIcon} />
+      <span style={styles.appName}>Expense Tracker</span>
+    </div>
 
-  return (
-    <header style={styles.header}>
-      <div style={styles.logoWrapper}>
-        <BiDollarCircle style={styles.dollarIcon} />
-        <span style={styles.appName}>Expense Tracker</span>
-      </div>
-      <h1 style={styles.title}>{currentView}</h1>
-    </header>
-  );
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      {currentUser ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              color: '#f4f6f8',                // clean light color
+              fontWeight: 700,
+              fontSize: '1.6rem',
+              fontFamily: '"Merriweather", serif',
+              textTransform: 'capitalize',
+              letterSpacing: '0.4px',
+              marginRight: '12px',
+            }}
+          >
+            {(currentUser.name || currentUser.email) || ''}
+          </div>
+
+          <Button
+            size="sm"
+            variant="outline-light"
+            style={{
+              fontWeight: 600,
+              borderRadius: '22px',
+              padding: '6px 18px',
+              fontSize: '0.9rem',
+              fontFamily: '"Poppins", "Segoe UI", sans-serif',
+              transition: 'all 0.2s ease-in-out',
+              borderColor: '#fff',
+            }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = '#fff', e.target.style.color = '#0a3d62')}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = 'transparent', e.target.style.color = '#fff')}
+            onClick={logout}
+          >
+            Logout
+          </Button>
+        </div>
+      ) : (
+        <div style={{ color: '#fff', opacity: 0.9 }}>Not signed in</div>
+      )}
+    </div>
+  </header>
+);
+
+
+
 };
 
 const styles = {

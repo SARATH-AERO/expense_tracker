@@ -1,174 +1,290 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Card, Table } from 'react-bootstrap';
-import { Bar } from 'react-chartjs-2';
-import 'chart.js/auto';
+import { Card, Row, Col, Table } from 'react-bootstrap';
+import { Line, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  ChartDataLabels
+);
 
 const Dashboard = () => {
-  const { accounts, transactions } = useContext(AppContext);
-  const [currentMonthTransactions, setCurrentMonthTransactions] = useState([]);
-  const [totalIncome, setTotalIncome] = useState(0);
-  const [totalExpense, setTotalExpense] = useState(0);
-  const [totalSelfTransfer, setTotalSelfTransfer] = useState(0);
-  const [totalBalance, setTotalBalance] = useState(0);
+  const { transactions, accounts, currentUser } = useContext(AppContext);
+  const [summary, setSummary] = useState({
+    totalIncome: 0,
+    totalExpense: 0,
+    totalBalance: 0,
+    accountBalances: [],
+    recentTransactions: [],
+    expensesByCategory: {},
+    monthlyData: {}
+  });
 
   useEffect(() => {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const filteredTransactions = transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
-      return transactionDate >= startOfMonth && transactionDate <= today;
+    if (!currentUser) return;
+
+    // Filter user's data
+    const userTransactions = transactions.filter(t => t.userId === currentUser.id);
+    const userAccounts = accounts.filter(a => a.userId === currentUser.id);
+
+    // Calculate totals
+    const totals = userTransactions.reduce((acc, trans) => {
+      const amount = parseFloat(trans.amount) || 0;
+      if (trans.transType === 'Income') {
+        acc.totalIncome += amount;
+      } else if (trans.transType === 'Expense' || trans.transType === 'Loan Payment') {
+        acc.totalExpense += amount;
+      }
+      return acc;
+    }, { totalIncome: 0, totalExpense: 0 });
+
+    // Get account balances
+    const accountBalances = userAccounts.map(account => ({
+      name: account.name,
+      group: account.group,
+      balance: account.amount
+    }));
+
+    // Calculate total balance
+    const totalBalance = accountBalances.reduce((sum, acc) => sum + acc.balance, 0);
+
+    // Get recent transactions (last 5)
+    const recentTransactions = userTransactions
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5);
+
+    // Calculate expenses by category
+    const expensesByCategory = userTransactions
+      .filter(t => t.transType === 'Expense')
+      .reduce((acc, trans) => {
+        const tag = trans.tag || 'Other';
+        acc[tag] = (acc[tag] || 0) + parseFloat(trans.amount);
+        return acc;
+      }, {});
+
+    // Calculate monthly trends
+    const monthlyData = userTransactions.reduce((acc, trans) => {
+      const date = new Date(trans.date);
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+      
+      if (!acc[monthYear]) {
+        acc[monthYear] = { income: 0, expense: 0 };
+      }
+      
+      const amount = parseFloat(trans.amount);
+      if (trans.transType === 'Income') {
+        acc[monthYear].income += amount;
+      } else if (trans.transType === 'Expense' || trans.transType === 'Loan Payment') {
+        acc[monthYear].expense += amount;
+      }
+      
+      return acc;
+    }, {});
+
+    setSummary({
+      ...totals,
+      totalBalance,
+      accountBalances,
+      recentTransactions,
+      expensesByCategory,
+      monthlyData
     });
+  }, [transactions, accounts, currentUser]);
 
-    setCurrentMonthTransactions(filteredTransactions);
-
-    const income = filteredTransactions
-      .filter(transaction => transaction.transType === 'Income')
-      .reduce((sum, transaction) => sum + (parseFloat(transaction.amount) || 0), 0);
-
-    const expense = filteredTransactions
-      .filter(transaction => transaction.transType === 'Expense' || transaction.transType === 'Loan Payment')
-      .reduce((sum, transaction) => sum + (parseFloat(transaction.amount) || 0), 0);
-
-    const selfTransfer = filteredTransactions
-      .filter(transaction => transaction.transType === 'Self-Transfer')
-      .reduce((sum, transaction) => sum + (parseFloat(transaction.amount) || 0), 0);
-
-    const balance = accounts
-      .filter(account => account.group === 'Cash' || account.group === 'Bank Account')
-      .reduce((sum, account) => sum + (parseFloat(account.amount) || 0), 0);
-
-    setTotalIncome(income);
-    setTotalExpense(expense);
-    setTotalSelfTransfer(selfTransfer);
-    setTotalBalance(balance);
-  }, [transactions, accounts]);
-  const netSavings = totalIncome - totalExpense;
-
-  const chartData = {
-    labels: currentMonthTransactions.map(transaction => new Date(transaction.date).toLocaleDateString()),
+  const monthlyChartData = {
+    labels: Object.keys(summary.monthlyData),
     datasets: [
       {
         label: 'Income',
-        data: currentMonthTransactions.filter(transaction => transaction.transType === 'Income').map(transaction => transaction.amount),
-        backgroundColor: 'green',
+        data: Object.values(summary.monthlyData).map(m => m.income),
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
       },
       {
-        label: 'Expenses',
-        data: currentMonthTransactions.filter(transaction => transaction.transType === 'Expense' || transaction.transType === 'Loan payment').map(transaction => transaction.amount),
-        backgroundColor: 'red',
-      },
-    ],
+        label: 'Expense',
+        data: Object.values(summary.monthlyData).map(m => m.expense),
+        borderColor: 'rgb(255, 99, 132)',
+        tension: 0.1
+      }
+    ]
   };
 
-  const getAmountStyle = (type) => {
-    switch (type) {
-      case 'Expense':
-      case 'Loan Payment':
-        return { color: 'red', fontFamily: 'Roboto Mono, monospace', fontWeight: '500', fontSize: '20px', textAlign: 'right' };
-      case 'Income':
-        return { color: '#21BA45', fontFamily: 'Roboto Mono, monospace', fontWeight: '500', fontSize: '20px', textAlign: 'right' };
-      case 'Self-Transfer':
-        return { color: 'blue', fontFamily: 'Roboto Mono, monospace', fontWeight: '500', fontSize: '20px', textAlign: 'right' };
-      default:
-        return {};
-    }
+  const expenseChartData = {
+    labels: Object.keys(summary.expensesByCategory),
+    datasets: [{
+      data: Object.values(summary.expensesByCategory),
+      backgroundColor: [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'
+      ]
+    }]
   };
 
-  const getAmountPrefix = (type) => {
-    switch (type) {
-      case 'Expense':
-      case 'Loan Payment':
-        return '-';
-      case 'Income':
-        return '+';
-      default:
-        return '';
-    }
-  };
-
-  function getCurrentMonthYear() {
-    const date = new Date();
-    const options = { month: 'long', year: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+  if (!currentUser) {
+    return (
+      <div className="text-center p-5">
+        <h2>Please login to view your dashboard</h2>
+      </div>
+    );
   }
 
   return (
-    <div>
-        <h2 style={{textAlign:'center'}}>{getCurrentMonthYear()}</h2>
-      <h2>Summary Cards</h2>
-      <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '20px' }}>
-        <Card style={{ width: '18rem' }}>
-          <Card.Body>
-            <Card.Title>Total Balance</Card.Title>
-            <Card.Text style={{ color: 'green' }}>+{totalBalance}</Card.Text>
-          </Card.Body>
-        </Card>
-        <Card style={{ width: '18rem' }}>
-          <Card.Body>
-            <Card.Title>Total Income</Card.Title>
-            <Card.Text style={{ color: 'green' }}>+{totalIncome}</Card.Text>
-          </Card.Body>
-        </Card>
-        <Card style={{ width: '18rem' }}>
-          <Card.Body>
-            <Card.Title>Total Expenses</Card.Title>
-            <Card.Text style={{ color: 'red' }}>-{totalExpense}</Card.Text>
-          </Card.Body>
-        </Card>
-        <Card style={{ width: '18rem' }}>
-          <Card.Body>
-            <Card.Title>Net Savings</Card.Title>
-            <Card.Text>{netSavings}</Card.Text>
-          </Card.Body>
-        </Card>
-      </div>
+    <div className="p-4">
+      <h2 className="mb-4">Welcome, {currentUser.name || currentUser.email}!</h2>
+      
+      {/* Summary Cards */}
+      <Row className="mb-4">
+        <Col md={4}>
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Total Balance</Card.Title>
+              <h3 className={`${summary.totalBalance >= 0 ? 'text-success' : 'text-danger'}`}>
+                ₹{summary.totalBalance.toLocaleString()}
+              </h3>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Total Income</Card.Title>
+              <h3 className="text-success">₹{summary.totalIncome.toLocaleString()}</h3>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card className="h-100">
+            <Card.Body>
+              <Card.Title>Total Expenses</Card.Title>
+              <h3 className="text-danger">₹{summary.totalExpense.toLocaleString()}</h3>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
-      <h2>Income vs. Expenses</h2>
-      <div style={{ marginBottom: '20px' }}>
-        <Bar data={chartData} />
-      </div>
+      {/* Charts Row */}
+      <Row className="mb-4">
+        <Col md={8}>
+          <Card>
+            <Card.Body>
+              <Card.Title>Monthly Income vs Expenses</Card.Title>
+              <Line 
+                data={monthlyChartData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    datalabels: {
+                      display: true,
+                      color: '#fff',
+                      formatter: (value) => `₹${value.toLocaleString()}`
+                    }
+                  }
+                }}
+              />
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card>
+            <Card.Body>
+              <Card.Title>Expenses by Category</Card.Title>
+              <Doughnut 
+                data={expenseChartData}
+                options={{
+                  plugins: {
+                    datalabels: {
+                      color: '#fff',
+                      formatter: (value, ctx) => {
+                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${percentage}%`;
+                      }
+                    }
+                  }
+                }}
+              />
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
-      <h2>Recent Transactions</h2>
-      <Table>
-        <thead>
-          <tr>
-            <th>From</th>
-            <th>Amount</th>
-            <th>To</th>
-            <th>Date</th>
-            <th>Note</th>
-            <th>Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentMonthTransactions.map((transaction, index) => (
-            <tr key={index}>
-              <td>{transaction.from}</td>
-              {/* <td style={{ textAlign: 'right', fontWeight: 'bold' }} >{transaction.amount}</td> */}
-              <td style={getAmountStyle(transaction.transType)}>
-                  {getAmountPrefix(transaction.transType)}{transaction.amount}
-                </td>
-              <td>{transaction.tag}</td>
-              <td>{new Date(transaction.date).toLocaleDateString()}</td>
-              <td>{transaction.note}</td>
-              <td>{transaction.transType}</td>
-            </tr>
-          ))}
-          <tr>
-            <td colSpan="5" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Income:</td>
-            <td style={{ color: 'green', fontWeight: '500', fontSize: '20px', textAlign: 'right', fontFamily: 'Roboto Mono, monospace'}}>+{totalIncome}</td>
-          </tr>
-          <tr>
-            <td colSpan="5" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Self-Transfer:</td>
-            <td style={{ color: 'blue', fontWeight: '500', fontSize: '20px', textAlign: 'right', fontFamily: 'Roboto Mono, monospace'}}>{totalSelfTransfer}</td>
-          </tr>
-          <tr>
-            <td colSpan="5" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Expense:</td>
-            <td style={{ color: 'red', fontWeight: '500', fontSize: '20px', textAlign: 'right' , fontFamily: 'Roboto Mono, monospace'}}>-{totalExpense}</td>
-          </tr>
-        </tbody>
-      </Table>
+      {/* Account Balances */}
+      <Card className="mb-4">
+        <Card.Body>
+          <Card.Title>Account Balances</Card.Title>
+          <Table responsive>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Type</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.accountBalances.map((account, index) => (
+                <tr key={index}>
+                  <td>{account.name}</td>
+                  <td>{account.group}</td>
+                  <td className={account.balance >= 0 ? 'text-success' : 'text-danger'}>
+                    ₹{account.balance.toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+
+      {/* Recent Transactions */}
+      <Card>
+        <Card.Body>
+          <Card.Title>Recent Transactions</Card.Title>
+          <Table responsive>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>From/To</th>
+                <th>Amount</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.recentTransactions.map((trans, index) => (
+                <tr key={index}>
+                  <td>{new Date(trans.date).toLocaleDateString()}</td>
+                  <td>{trans.transType}</td>
+                  <td>{trans.from} → {trans.to}</td>
+                  <td className={trans.transType === 'Income' ? 'text-success' : 'text-danger'}>
+                    ₹{trans.amount.toLocaleString()}
+                  </td>
+                  <td>{trans.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
     </div>
   );
 };

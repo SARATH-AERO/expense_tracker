@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import React from "react";
+import { useLocation } from 'react-router-dom';
 import Dashboard from "../pages/Dashboard";
 import Accounts from "../pages/Accounts";
 import Transactions from "../pages/Transactions";
@@ -8,34 +8,35 @@ import Budget from "../pages/Budget";
 import Settings from "../pages/Settings";
 
 const MainContent = () => {
-  const { currentView } = useContext(AppContext);
+  const location = useLocation();
 
-  const renderComponent = () => {
-    switch (currentView) {
-        case 'Dashboard':
-            return <Dashboard />;
-        case 'Transactions':
-            return <Transactions />;
-        case 'Accounts':
-            return <Accounts />;
-        case 'Budget':
-          return <Budget />;
-        case 'Reports':
-          return <Reports />;
-        case 'Settings':
-          return <Settings />;
-        default:
-            return <Dashboard />;
+  const renderByPath = () => {
+    const path = location.pathname.replace('/', '').toLowerCase();
+    switch (path) {
+      case 'dashboard':
+      case '':
+        return <Dashboard />;
+      case 'transactions':
+        return <Transactions />;
+      case 'accounts':
+        return <Accounts />;
+      case 'budget':
+        return <Budget />;
+      case 'reports':
+        return <Reports />;
+      case 'settings':
+        return <Settings />;
+      default:
+        return <Dashboard />;
     }
-};
+  };
 
-return (
+  return (
     <div style={styles.container}>
-        {renderComponent()}
-        {/* Add content for each view */}
+      {renderByPath()}
     </div>
-);
-}
+  );
+};
 
 // const styles = {
 //   container: {

@@ -5,7 +5,11 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { AppContext } from '../context/AppContext';
 
 const NewTransactionTransfer = () => {
-  const { accounts, setAccounts, transactions, addTransaction } = useContext(AppContext);
+  const { accounts, setAccounts, addTransaction, currentUser } = useContext(AppContext);
+  
+  // Filter accounts by current user (guard when accounts is undefined)
+  const userAccounts = (accounts || []).filter(acc => acc.userId === currentUser?.id);
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
@@ -13,44 +17,56 @@ const NewTransactionTransfer = () => {
     to: '',
     amount: '',
     date: new Date(),
-    note: ''
+    note: '',
+    userId: currentUser?.id
   });
 
   const [fromBalance, setFromBalance] = useState(0);
   const [toBalance, setToBalance] = useState(0);
 
-  // Available accounts for transfer
-  const validAccounts = accounts.filter(
+  // Available accounts for transfer (only Cash and Bank accounts)
+  const validAccounts = userAccounts.filter(
     acc => acc.group === 'Cash' || acc.group === 'Bank Account'
   );
 
-  // Initialize dropdowns on first load
+  // Initialize dropdowns with user's accounts
   useEffect(() => {
     if (validAccounts.length > 0) {
       const defaultFrom = validAccounts[0].name;
       const defaultTo = validAccounts.length > 1 ? validAccounts[1].name : validAccounts[0].name;
 
-      setFormData(prev => ({
-        ...prev,
-        from: defaultFrom,
-        to: defaultTo
-      }));
+      // Only update formData if values actually change to avoid infinite setState loops
+      setFormData(prev => {
+        const sameFrom = prev.from === defaultFrom;
+        const sameTo = prev.to === defaultTo;
+        const sameUser = prev.userId === currentUser?.id;
+        if (sameFrom && sameTo && sameUser) return prev; // no change
+        return {
+          ...prev,
+          from: defaultFrom,
+          to: defaultTo,
+          userId: currentUser?.id
+        };
+      });
 
       const fromAcc = validAccounts.find(acc => acc.name === defaultFrom);
       const toAcc = validAccounts.find(acc => acc.name === defaultTo);
 
-      setFromBalance(fromAcc ? fromAcc.amount : 0);
-      setToBalance(toAcc ? toAcc.amount : 0);
+      // Only update balances when they differ
+      const newFromBalance = fromAcc ? fromAcc.amount : 0;
+      const newToBalance = toAcc ? toAcc.amount : 0;
+      setFromBalance(prev => (prev === newFromBalance ? prev : newFromBalance));
+      setToBalance(prev => (prev === newToBalance ? prev : newToBalance));
     }
-  }, [accounts]);
+  }, [validAccounts, currentUser]);
 
-  // Update balances when dropdowns change
+  // Update balances when selections change
   useEffect(() => {
-    const fromAcc = accounts.find(acc => acc.name === formData.from);
-    const toAcc = accounts.find(acc => acc.name === formData.to);
+    const fromAcc = userAccounts.find(acc => acc.name === formData.from);
+    const toAcc = userAccounts.find(acc => acc.name === formData.to);
     setFromBalance(fromAcc ? fromAcc.amount : 0);
     setToBalance(toAcc ? toAcc.amount : 0);
-  }, [formData.from, formData.to, accounts]);
+  }, [formData.from, formData.to, userAccounts]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -66,46 +82,63 @@ const NewTransactionTransfer = () => {
     setSuccess('');
     setError('');
 
-    const fromAccount = accounts.find(acc => acc.name === formData.from);
-    const toAccount = accounts.find(acc => acc.name === formData.to);
+    const fromAccount = userAccounts.find(acc => acc.name === formData.from);
+    const toAccount = userAccounts.find(acc => acc.name === formData.to);
     const amount = parseFloat(formData.amount);
 
-    if (!fromAccount || !toAccount) {
-      setError('Invalid accounts selected');
+    // Validation checks
+    if (!fromAccount || (!toAccount && formData.to !== 'Others')) {
+      setError('Invalid account selection');
       return;
     }
 
     if (formData.from === formData.to) {
-      setError('From and To accounts cannot be the same');
+      setError('Cannot transfer to same account');
       return;
     }
 
-    if (isNaN(amount) || amount <= 0) {
+    if (!amount || amount <= 0) {
       setError('Enter a valid amount');
       return;
     }
 
     if (amount > fromAccount.amount) {
-      setError('Not enough balance in source account');
+      setError('Insufficient balance');
       return;
     }
 
-    // Update balances
-    fromAccount.amount -= amount;
-    toAccount.amount += amount;
-
-    setAccounts([...accounts]);
-
-    addTransaction({
-      from: formData.from,
-      amount: formData.amount,
-      tag: formData.to,
-      date: formData.date,
-      note: formData.note,
-      transType: 'Self-Transfer'
+    // Update account balances
+    const updatedAccounts = accounts.map(acc => {
+      if (acc.id === fromAccount.id) {
+        return { ...acc, amount: acc.amount - amount };
+      }
+      if (formData.to !== 'Others' && acc.id === toAccount.id) {
+        return { ...acc, amount: acc.amount + amount };
+      }
+      return acc;
     });
 
-    setSuccess('Transfer successful');
+    setAccounts(updatedAccounts);
+
+    // Add transaction with user context
+    addTransaction({
+      ...formData,
+      amount: amount,
+      userId: currentUser?.id,
+      fromAccountId: fromAccount.id,
+      toAccountId: formData.to !== 'Others' ? toAccount?.id : null,
+      transType: formData.to === 'Others' ? 'Transfer-Out' : 'Self-Transfer',
+      createdAt: new Date().toISOString()
+    });
+
+    setSuccess('Transfer completed successfully');
+    
+    // Reset form partially
+    setFormData(prev => ({
+      ...prev,
+      amount: '',
+      note: ''
+    }));
   };
 
   return (
