@@ -274,7 +274,18 @@ const Dashboard = () => {
                 <tr key={index}>
                   <td>{new Date(trans.date).toLocaleDateString()}</td>
                   <td>{trans.transType}</td>
-                  <td>{trans.from} → {trans.to}</td>
+                  <td>
+  {trans.transType === 'Expense' || trans.transType === 'Loan Payment' ? (
+    <>
+      {trans.from} → <span className="text-muted fst-italic">{trans.tag || 'Expense'}</span>
+    </>
+  ) : (
+    <>
+      {trans.from} → {trans.to || ''}
+    </>
+  )}
+</td>
+
                   <td className={trans.transType === 'Income' ? 'text-success' : 'text-danger'}>
                     ₹{trans.amount.toLocaleString()}
                   </td>

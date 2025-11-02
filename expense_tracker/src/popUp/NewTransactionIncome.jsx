@@ -45,7 +45,15 @@ const NewTransactionIncome = ({ handleSubmit }) => {
 
    // Initialize form with user's accounts
   useEffect(() => {
-    if (userAccounts.length > 0 && !formData.to) {
+  if (userAccounts.length > 0) {
+    // find currently selected account
+    const selectedAccount = userAccounts.find(acc => acc.name === formData.to);
+
+    if (selectedAccount) {
+      // if the selected account exists, update its balance
+      setSelectedBalance(selectedAccount.amount);
+    } else {
+      // otherwise, pick the first account as default
       const defaultAccount = userAccounts[0];
       setFormData(prev => ({
         ...prev,
@@ -54,7 +62,9 @@ const NewTransactionIncome = ({ handleSubmit }) => {
       }));
       setSelectedBalance(defaultAccount.amount);
     }
-  }, [userAccounts, currentUser]);
+  }
+}, [userAccounts, currentUser]);
+
 
   const validateAndSubmit = (e) => {
     e.preventDefault();

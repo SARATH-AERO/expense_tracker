@@ -31,34 +31,25 @@ const NewTransactionTransfer = () => {
 
   // Initialize dropdowns with user's accounts
   useEffect(() => {
-    if (validAccounts.length > 0) {
-      const defaultFrom = validAccounts[0].name;
-      const defaultTo = validAccounts.length > 1 ? validAccounts[1].name : validAccounts[0].name;
+  if (validAccounts.length > 0 && !formData.from && !formData.to) {
+    const defaultFrom = validAccounts[0].name;
+    const defaultTo = validAccounts.length > 1 ? validAccounts[1].name : validAccounts[0].name;
 
-      // Only update formData if values actually change to avoid infinite setState loops
-      setFormData(prev => {
-        const sameFrom = prev.from === defaultFrom;
-        const sameTo = prev.to === defaultTo;
-        const sameUser = prev.userId === currentUser?.id;
-        if (sameFrom && sameTo && sameUser) return prev; // no change
-        return {
-          ...prev,
-          from: defaultFrom,
-          to: defaultTo,
-          userId: currentUser?.id
-        };
-      });
+    setFormData(prev => ({
+      ...prev,
+      from: defaultFrom,
+      to: defaultTo,
+      userId: currentUser?.id
+    }));
 
-      const fromAcc = validAccounts.find(acc => acc.name === defaultFrom);
-      const toAcc = validAccounts.find(acc => acc.name === defaultTo);
+    const fromAcc = validAccounts.find(acc => acc.name === defaultFrom);
+    const toAcc = validAccounts.find(acc => acc.name === defaultTo);
 
-      // Only update balances when they differ
-      const newFromBalance = fromAcc ? fromAcc.amount : 0;
-      const newToBalance = toAcc ? toAcc.amount : 0;
-      setFromBalance(prev => (prev === newFromBalance ? prev : newFromBalance));
-      setToBalance(prev => (prev === newToBalance ? prev : newToBalance));
-    }
-  }, [validAccounts, currentUser]);
+    setFromBalance(fromAcc ? fromAcc.amount : 0);
+    setToBalance(toAcc ? toAcc.amount : 0);
+  }
+}, [validAccounts, currentUser]);
+
 
   // Update balances when selections change
   useEffect(() => {
