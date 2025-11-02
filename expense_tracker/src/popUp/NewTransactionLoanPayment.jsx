@@ -69,59 +69,65 @@ const NewTransactionLoanPayment = ({ handleSubmit }) => {
 
   // Form validation and submission
   const validateAndSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setError('');
+  setSuccess('');
 
-    const fromAccount = userAccounts.find(acc => acc.name === formData.from);
-    const toAccount = userAccounts.find(acc => acc.name === formData.to);
-    const amount = parseFloat(formData.amount);
+  const fromAccount = userAccounts.find(acc => acc.name === formData.from);
+  const toAccount = userAccounts.find(acc => acc.name === formData.to);
+  const amount = parseFloat(formData.amount);
 
-    if (!fromAccount || !toAccount) {
-      setError('Invalid account selection');
-      return;
+  // ✅ Allow "Others" as a valid source account
+  if ((!fromAccount && formData.from !== 'Others') || !toAccount) {
+    setError('Invalid account selection');
+    return;
+  }
+
+  // ✅ Skip balance check if from = Others
+  if (formData.from !== 'Others' && amount > fromAccount.amount) {
+    setError('Not enough balance in the From account');
+    return;
+  }
+
+  if (amount > toAccount.amount) {
+    setError('Payment exceeds pending loan amount');
+    return;
+  }
+
+  // ✅ Update balances
+  const updatedAccounts = accounts.map(acc => {
+    if (acc.id === toAccount.id) {
+      return { ...acc, amount: acc.amount - amount };
     }
-
-    if (formData.from !== 'Others' && amount > fromAccount.amount) {
-      setError('Not enough balance in the From account');
-      return;
+    if (formData.from !== 'Others' && acc.id === fromAccount.id) {
+      return { ...acc, amount: acc.amount - amount };
     }
+    return acc;
+  });
 
-    if (amount > toAccount.amount) {
-      setError('Payment exceeds pending loan amount');
-      return;
-    }
+  setAccounts(updatedAccounts);
 
-    // Update account balances
-    const updatedAccounts = accounts.map(acc => {
-      if (acc.id === fromAccount.id && formData.from !== 'Others') {
-        return { ...acc, amount: acc.amount - amount };
-      }
-      if (acc.id === toAccount.id) {
-        return { ...acc, amount: acc.amount - amount };
-      }
-      return acc;
-    });
+  setFromBalance(
+    formData.from !== 'Others' ? fromAccount.amount - amount : fromBalance
+  );
+  setToPending(toAccount.amount - amount);
 
-    setAccounts(updatedAccounts);
-    setFromBalance(fromAccount.amount - (formData.from !== 'Others' ? amount : 0));
-    setToPending(toAccount.amount - amount);
+  // ✅ Add transaction
+  addTransaction({
+    ...formData,
+    amount,
+    userId: currentUser?.id,
+    fromAccountId: formData.from !== 'Others' ? fromAccount.id : null,
+    toAccountId: toAccount.id,
+    tag: toAccount.name,
+    transType: 'Loan Payment',
+    createdAt: new Date().toISOString()
+  });
 
-    // Add transaction with user context
-    addTransaction({
-      ...formData,
-      amount: amount,
-      userId: currentUser?.id,
-      fromAccountId: fromAccount.id,
-      toAccountId: toAccount.id,
-      tag: toAccount.name,
-      transType: 'Loan Payment',
-      createdAt: new Date().toISOString()
-    });
+  setSuccess('Loan payment successful');
+  setFormData(prev => ({ ...prev, amount: '', note: '' }));
+};
 
-    setSuccess('Loan payment successful');
-    setFormData(prev => ({ ...prev, amount: '', note: '' }));
-  };
   const fromAccounts = accounts.filter(acc => acc.group === 'Cash' || acc.group === 'Bank Account');
   const toAccounts = accounts.filter(acc => acc.group === 'Credit' || acc.group === 'Loan');
 

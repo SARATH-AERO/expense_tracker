@@ -68,7 +68,7 @@ const Accounts = () => {
 
   const formatAmount = (amount, group) => {
     const isPositive = group === 'Cash' || group === 'Bank Account';
-    const formattedAmount = isPositive ? `+${amount.toLocaleString()}` : `-${amount.toLocaleString()}`;
+    const formattedAmount = `${isPositive ? '+' : '-'}${Math.abs(amount).toLocaleString()}`;
     const color = isPositive ? '#21BA45' : 'red';
     return (
       <span style={{ 

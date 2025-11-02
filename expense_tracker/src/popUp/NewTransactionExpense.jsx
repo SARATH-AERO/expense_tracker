@@ -7,6 +7,7 @@ import Transactions from '../pages/Transactions';
 import { data } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import { type } from '@testing-library/user-event/dist/type';
+  import { useMemo } from 'react';
 
 const NewTransactionExpense = () => {
   const { transactions, addTransaction, accounts, setAccounts, currentUser } = useContext(AppContext);
@@ -27,7 +28,12 @@ const NewTransactionExpense = () => {
   const [balance, setBalance] = useState(0);
 
   // Filter loan accounts out for expense transactions
-  const toAccounts = userAccounts.filter(account => account.group !== 'Loan');
+ 
+
+const toAccounts = useMemo(() => {
+  return userAccounts.filter(acc => acc.group !== 'Loan');
+}, [userAccounts]);
+
 
 
   // Update form when accounts change or user changes
