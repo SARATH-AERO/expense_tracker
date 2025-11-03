@@ -1,0 +1,19 @@
+@startuml
+title Activity Diagram - Generate Monthly Report
+start
+:User selects "Generate Report";
+:Select date range and filters;
+if (Valid input?) then (yes)
+  :Aggregate transactions;
+  :Group by category;
+  :Compute totals and charts;
+  :Render report preview;
+  if (Export?) then (yes)
+    :Export to PDF/CSV;
+  else (no)
+  endif
+else (no)
+  :Show validation errors;
+endif
+stop
+@enduml

@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+actor "Data Owner / User" as User
+actor "Data User" as DataUser
+actor Admin
+
+rectangle UseCases {
+  User -- (Register / Login)
+  User -- (Add Transaction)
+  User -- (Edit Transaction)
+  User -- (Delete Transaction)
+  User -- (Manage Accounts)
+  User -- (Create Budget)
+  User -- (Generate Report)
+  DataUser -- (View Reports)
+  DataUser -- (Export Data)
+  Admin -- (Manage Users)
+  Admin -- (System Configuration)
+}
+@enduml

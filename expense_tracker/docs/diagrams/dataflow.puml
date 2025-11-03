@@ -1,0 +1,9 @@
+@startuml
+title Dataflow Diagram - Level 1
+actor User
+User -> "Web UI" : Enter / View Data
+"Web UI" -> "App Contexts" : Request / Update State
+"App Contexts" -> "Local Storage" : Persist / Retrieve
+"App Contexts" -> "Reports Module" : Provide aggregated data
+"Reports Module" -> "Charts" : Render visualizations
+@enduml

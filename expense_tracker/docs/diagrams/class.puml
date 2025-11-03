@@ -1,0 +1,58 @@
+@startuml
+title Class Diagram - Core Domain Model
+class User {
+  +id: string
+  +name: string
+  +email: string
+  +passwordHash: string
+  +settings: object
+  +accounts: Account[]
+  +transactions: Transaction[]
+}
+
+class Account {
+  +id: string
+  +name: string
+  +type: string
+  +balance: number
+  +userId: string
+}
+
+class Transaction {
+  +id: string
+  +date: Date
+  +type: string
+  +amount: number
+  +category: string
+  +note: string
+  +accountId: string
+}
+
+class Budget {
+  +id: string
+  +userId: string
+  +name: string
+  +amount: number
+  +period: string
+}
+
+class Category {
+  +id: string
+  +name: string
+  +type: string
+}
+
+class Report {
+  +id: string
+  +userId: string
+  +type: string
+  +generatedAt: Date
+}
+
+User "1"--"*" Account
+User "1"--"*" Transaction
+User "1"--"*" Budget
+Account "1"--"*" Transaction
+Transaction --> Category
+Report --> User
+@enduml

@@ -1,0 +1,18 @@
+@startuml
+title Sequence Diagram - Add Transaction
+actor User
+participant "UI (Form)" as UI
+participant "React App" as App
+participant "AppContext" as Context
+participant "Local Storage" as Local
+
+User -> UI: Open New Transaction Form
+UI -> User: Show Form
+User -> UI: Submit Transaction Data
+UI -> App: dispatch(addTransaction)
+App -> Context: addTransaction(payload)
+Context -> Local: saveTransaction(transaction)
+Local --> Context: success
+Context --> App: state updated
+App --> UI: show confirmation
+@enduml

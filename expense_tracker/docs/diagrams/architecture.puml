@@ -1,0 +1,15 @@
+@startuml
+title Expense Tracker - High Level Architecture
+actor User as Browser
+component "React App\n(UI + Router)" as React
+component "App Contexts\n(State Management)" as Context
+database "Local Storage" as Local
+component "Charts & Reports" as Charts
+component "Persistence & Utils" as Utils
+
+Browser --> React : Interacts
+React --> Context : Uses
+Context --> Local : Read / Write
+React --> Charts : Requests data
+Context --> Utils : Validation / Aggregation
+@enduml
